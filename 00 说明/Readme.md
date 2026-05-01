@@ -83,7 +83,7 @@ const appreciatePayments = [
 ## 参考资料
 
 1.  Bilibili Up主 [@一化儿](https://space.bilibili.com/1526560679/)
-2.  普通高中教科书 化学（人教版、鲁科版、苏教版、沪科技版）[_国家中小学智慧教育平台_](https://www.zxx.edu.cn/elecEdu)
+2.  普通高中教科书 化学（人教版、鲁科版、苏教版、沪教版）[_国家中小学智慧教育平台_](https://www.zxx.edu.cn/elecEdu)
 3.  解题觉醒-化学 [天星教育](https://www.tesoon.com/)
 4.  [璎晴宫·霁月台·芳兰亭](https://www.zhihu.com/column/c_1266657933414342656)
 5.  [维基百科](https://zh.wikipedia.org/)
