@@ -35,7 +35,9 @@ defineProps<{
   border-radius: 8px;
   background-color: var(--vp-c-bg-soft);
   border: 1px solid transparent;
-  transition: border-color 0.25s, background-color 0.25s;
+  transition:
+    border-color 0.25s,
+    background-color 0.25s;
   white-space: nowrap;
 }
 

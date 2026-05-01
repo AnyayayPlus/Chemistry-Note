@@ -10,9 +10,7 @@ onMounted(() => {
   if (!id) return router.go(`/404`);
   axios.get("/shortmap.json").then(
     (res) =>
-      res.data[id] !== undefined
-        ? router.go(`/${encodeURI(res.data[id])}`)
-        : router.go(`/404`),
+      res.data[id] !== undefined ? router.go(`/${encodeURI(res.data[id])}`) : router.go(`/404`),
     () => router.go(`/404`),
   );
 });

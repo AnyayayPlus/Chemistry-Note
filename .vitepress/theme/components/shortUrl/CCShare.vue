@@ -11,10 +11,7 @@
     />
     <button class="copylink" @click="copyLink">
       复制链接
-      <span
-        class="copy-indicator-wrapper"
-        :class="expand ? 'expanded' : 'folded'"
-      >
+      <span class="copy-indicator-wrapper" :class="expand ? 'expanded' : 'folded'">
         <svg class="copy-indicator" viewBox="0 0 24 24" width="18" height="18">
           <path
             fill="currentColor"
@@ -27,26 +24,26 @@
 </template>
 
 <script setup lang="ts">
-import QRCodeVue from 'qrcode.vue';
-import md5 from 'blueimp-md5';
-import { computed, onMounted, ref } from 'vue';
-import { useData } from 'vitepress';
-import { trackUmamiEvent } from '../../utils/umami';
+import QRCodeVue from "qrcode.vue";
+import md5 from "blueimp-md5";
+import { computed, onMounted, ref } from "vue";
+import { useData } from "vitepress";
+import { trackUmamiEvent } from "../../utils/umami";
 
 const { page, isDark } = useData();
-const origin = ref('');
+const origin = ref("");
 const expand = ref(false);
 let timer: ReturnType<typeof setTimeout> | null = null;
 
-const foreground = computed(() => (isDark.value ? '#D3D3CC' : '#3C3C43'));
+const foreground = computed(() => (isDark.value ? "#D3D3CC" : "#3C3C43"));
 
 const link = computed(() => {
-  const filePath = page.value.filePath ?? '';
-  const normalizedPath = filePath.replace(/(index)?\.md$/, '');
+  const filePath = page.value.filePath ?? "";
+  const normalizedPath = filePath.replace(/(index)?\.md$/, "");
   const encodedPath = encodeURI(normalizedPath);
   const baseUrl = origin.value;
 
-  if (!baseUrl) return '';
+  if (!baseUrl) return "";
   if (encodedPath.length < 10) return `${baseUrl}/${encodedPath}`;
 
   // Must match the short-link jump page route.
@@ -56,10 +53,10 @@ const link = computed(() => {
 function copyLink() {
   if (!link.value || !navigator.clipboard) return;
   navigator.clipboard.writeText(link.value).then(() => {
-    trackUmamiEvent('share_copy_link', {
-      page_path: page.value.relativePath || page.value.filePath || '',
-      page_title: page.value.title || '',
-      is_short_link: link.value.includes('/s?q='),
+    trackUmamiEvent("share_copy_link", {
+      page_path: page.value.relativePath || page.value.filePath || "",
+      page_title: page.value.title || "",
+      is_short_link: link.value.includes("/s?q="),
     });
     expand.value = true;
     if (timer) clearTimeout(timer);

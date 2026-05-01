@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useData, useRoute } from 'vitepress';
-import type { DefaultTheme } from 'vitepress';
+import { computed } from "vue";
+import { useData, useRoute } from "vitepress";
+import type { DefaultTheme } from "vitepress";
 
 type SidebarItem = DefaultTheme.SidebarItem;
 type ChapterLinkItem = {
@@ -13,16 +13,16 @@ const { theme } = useData();
 const route = useRoute();
 
 const normalizePath = (value: string): string => {
-  const decoded = decodeURI(value || '');
-  const noHash = decoded.split('#')[0];
-  const noQuery = noHash.split('?')[0];
-  const noHtml = noQuery.replace(/\.html$/, '');
-  return noHtml.endsWith('/') && noHtml !== '/' ? noHtml.slice(0, -1) : noHtml;
+  const decoded = decodeURI(value || "");
+  const noHash = decoded.split("#")[0];
+  const noQuery = noHash.split("?")[0];
+  const noHtml = noQuery.replace(/\.html$/, "");
+  return noHtml.endsWith("/") && noHtml !== "/" ? noHtml.slice(0, -1) : noHtml;
 };
 
 const getSectionKey = (value: string): string => {
-  const segments = normalizePath(value).split('/').filter(Boolean);
-  return segments[0] || '';
+  const segments = normalizePath(value).split("/").filter(Boolean);
+  return segments[0] || "";
 };
 
 const currentSectionKey = computed(() => getSectionKey(route.path));
@@ -30,16 +30,14 @@ const currentSectionKey = computed(() => getSectionKey(route.path));
 const rootSidebar = computed<SidebarItem[]>(() => {
   const sidebar = theme.value.sidebar;
   if (!sidebar || Array.isArray(sidebar)) return [];
-  const root = sidebar['/'];
+  const root = sidebar["/"];
   return Array.isArray(root) ? root : [];
 });
 
 const currentChapter = computed<SidebarItem | undefined>(() => {
   const key = currentSectionKey.value;
   if (!key) return undefined;
-  return rootSidebar.value.find(
-    (item) => getSectionKey(item.link || '') === key,
-  );
+  return rootSidebar.value.find((item) => getSectionKey(item.link || "") === key);
 });
 
 const chapterItems = computed<SidebarItem[]>(() => {
@@ -47,37 +45,25 @@ const chapterItems = computed<SidebarItem[]>(() => {
 });
 
 const toChapterLinkItem = (item: SidebarItem): ChapterLinkItem => ({
-  text: item.text ?? '',
-  link: item.link ?? '#',
+  text: item.text ?? "",
+  link: item.link ?? "#",
 });
 
 const chapterLinkItems = computed<ChapterLinkItem[]>(() => {
-  return chapterItems.value
-    .map(toChapterLinkItem)
-    .filter((item) => item.text && item.link !== '#');
+  return chapterItems.value.map(toChapterLinkItem).filter((item) => item.text && item.link !== "#");
 });
 
-const isTopic = (item: ChapterLinkItem): boolean =>
-  item.text.startsWith('考点 ');
+const isTopic = (item: ChapterLinkItem): boolean => item.text.startsWith("考点 ");
 
-const mainItems = computed(() =>
-  chapterLinkItems.value.filter((item) => !isTopic(item)),
-);
-const topicItems = computed(() =>
-  chapterLinkItems.value.filter((item) => isTopic(item)),
-);
+const mainItems = computed(() => chapterLinkItems.value.filter((item) => !isTopic(item)));
+const topicItems = computed(() => chapterLinkItems.value.filter((item) => isTopic(item)));
 </script>
 
 <template>
   <section class="cc-chapter-overview">
     <template v-if="currentChapter">
       <div v-if="mainItems.length" class="card-grid">
-        <a
-          v-for="item in mainItems"
-          :key="item.link"
-          :href="item.link"
-          class="chapter-card"
-        >
+        <a v-for="item in mainItems" :key="item.link" :href="item.link" class="chapter-card">
           <span class="card-title">{{ item.text }}</span>
           <span class="card-arrow">→</span>
         </a>

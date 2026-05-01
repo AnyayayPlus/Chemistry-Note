@@ -11,7 +11,10 @@ type ShortUrlMap = {
 };
 
 const normalizePagePath = (pagePath: string): string =>
-  pagePath.replace(/\\/g, "/").replace(/^\//, "").replace(/(index)?\.md$/, "");
+  pagePath
+    .replace(/\\/g, "/")
+    .replace(/^\//, "")
+    .replace(/(index)?\.md$/, "");
 
 const buildShortUrlMap = (pages: string[]): ShortUrlMap => {
   const shortMap: ShortUrlMap = {};
@@ -30,14 +33,7 @@ export const generateShortMapFromRoot = (rootDir: string, targetFile: string) =>
   const pages = fg.sync("**/*.md", {
     cwd: rootDir,
     onlyFiles: true,
-    ignore: [
-      ".vitepress/**",
-      "node_modules/**",
-      "public/**",
-      "data/**",
-      "export/**",
-      "PDF文件/**",
-    ],
+    ignore: [".vitepress/**", "node_modules/**", "public/**", "data/**", "export/**", "PDF文件/**"],
   });
   const shortMap = buildShortUrlMap(pages);
   writeShortMap(targetFile, shortMap);

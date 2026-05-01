@@ -12,11 +12,8 @@ declare global {
   }
 }
 
-export function trackUmamiEvent(
-  eventName: string,
-  data?: UmamiEventData,
-): void {
-  if (typeof window === 'undefined') return;
+export function trackUmamiEvent(eventName: string, data?: UmamiEventData): void {
+  if (typeof window === "undefined") return;
 
   const tracker = window.umami;
   if (!tracker?.track) return;

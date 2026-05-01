@@ -34,24 +34,20 @@ export const getSectionFiles = (sectionPath: string): string[] =>
     .sort((a, b) => a.localeCompare(b, "zh-CN"));
 
 // Build sidebar from numbered top-level folders and their markdown files.
-export const buildSidebarItems = (
-  rootDir: string,
-): DefaultTheme.SidebarItem[] => {
+export const buildSidebarItems = (rootDir: string): DefaultTheme.SidebarItem[] => {
   const sections = getSections(rootDir);
 
   return sections.map((sectionName) => {
     const sectionPath = path.join(rootDir, sectionName);
-    const files = getSectionFiles(sectionPath).filter(
-      (name) => name.toLowerCase() !== "index.md",
-    );
+    const files = getSectionFiles(sectionPath).filter((name) => name.toLowerCase() !== "index.md");
 
     const items: DefaultTheme.SidebarItem[] = files.map((filename) => {
-        const name = filename.slice(0, -3);
-        return {
-          text: name,
-          link: encodeLink(`/${sectionName}/${name}`),
-        };
-      });
+      const name = filename.slice(0, -3);
+      return {
+        text: name,
+        link: encodeLink(`/${sectionName}/${name}`),
+      };
+    });
 
     return {
       text: sectionName,

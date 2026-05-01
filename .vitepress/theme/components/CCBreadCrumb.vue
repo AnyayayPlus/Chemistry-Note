@@ -2,12 +2,9 @@
 
 <template>
   <div id="breadcrumb">
-    <span
-      v-for="item in items"
-      class="bc-items"
-      :id="item.first ? 'bc-project' : undefined"
-      >{{ item.name }}</span
-    >
+    <span v-for="item in items" class="bc-items" :id="item.first ? 'bc-project' : undefined">{{
+      item.name
+    }}</span>
   </div>
 </template>
 
@@ -24,10 +21,7 @@ type Breadcrumb = {
 const items = ref<Breadcrumb[]>([]);
 watchEffect(() => {
   const pathSegs = page.value.filePath.split("/");
-  const shownSegs =
-    pathSegs.at(-1) === "index.md"
-      ? pathSegs.slice(0, -2)
-      : pathSegs.slice(0, -1);
+  const shownSegs = pathSegs.at(-1) === "index.md" ? pathSegs.slice(0, -2) : pathSegs.slice(0, -1);
   // 面包屑只显示到当前页面的上一级，不包含页面标题
   // 如果是首页，则一并去除当前目录名
 

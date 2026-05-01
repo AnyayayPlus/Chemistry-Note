@@ -20,7 +20,7 @@ watch(
   (path) => {
     if (typeof window === "undefined") return;
     runPageview(path);
-  }
+  },
 );
 
 onBeforeUnmount(() => {
@@ -29,9 +29,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <span class="waline-pageview">
-    <span class="waline-pageview-count"></span> views
-  </span>
+  <span class="waline-pageview"> <span class="waline-pageview-count"></span> views </span>
 </template>
 
 <style scoped>

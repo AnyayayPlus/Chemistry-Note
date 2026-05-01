@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
-import { useData } from 'vitepress';
+import { computed, onMounted, ref, watch } from "vue";
+import { useData } from "vitepress";
 
 type GithubCommit = {
   author?: {
@@ -26,14 +26,14 @@ type Contributor = {
 const { page } = useData();
 const contributors = ref<Contributor[]>([]);
 
-const pagePath = computed(() => page.value.relativePath || '');
+const pagePath = computed(() => page.value.relativePath || "");
 const isArticlePage = computed(() => {
   const relativePath = pagePath.value;
   if (!relativePath) return false;
-  if (relativePath === 'index.md' || relativePath === 'README.md') return false;
-  if (relativePath.startsWith('hidePage/')) return false;
-  if (relativePath.endsWith('/index.md')) return false;
-  return relativePath.endsWith('.md');
+  if (relativePath === "index.md" || relativePath === "README.md") return false;
+  if (relativePath.startsWith("hidePage/")) return false;
+  if (relativePath.endsWith("/index.md")) return false;
+  return relativePath.endsWith(".md");
 });
 
 async function loadContributors() {
@@ -47,7 +47,7 @@ async function loadContributors() {
       `https://api.github.com/repos/Seeridia/Chemistry-Note/commits?path=${encodeURIComponent(pagePath.value)}&per_page=100`,
       {
         headers: {
-          Accept: 'application/vnd.github+json',
+          Accept: "application/vnd.github+json",
         },
       },
     );
@@ -63,8 +63,7 @@ async function loadContributors() {
       const login = entry.author?.login?.trim();
       const avatar = entry.author?.avatar_url?.trim();
       const profile = entry.author?.html_url?.trim();
-      const name =
-        entry.author?.login?.trim() || entry.commit?.author?.name?.trim();
+      const name = entry.author?.login?.trim() || entry.commit?.author?.name?.trim();
 
       if (!login || !avatar || !profile || !name) continue;
 
@@ -89,7 +88,7 @@ async function loadContributors() {
     });
   } catch (error) {
     contributors.value = [];
-    console.error('[CCArticleContributors] Failed to load contributors', error);
+    console.error("[CCArticleContributors] Failed to load contributors", error);
   }
 }
 
@@ -98,10 +97,7 @@ watch(pagePath, loadContributors);
 </script>
 
 <template>
-  <section
-    v-if="isArticlePage && contributors.length"
-    class="cc-article-contributors"
-  >
+  <section v-if="isArticlePage && contributors.length" class="cc-article-contributors">
     <h2 class="cc-article-contributors__title">本文贡献者</h2>
 
     <div class="cc-article-contributors__list">
@@ -119,12 +115,8 @@ watch(pagePath, loadContributors);
           :alt="`&keep-color ${contributor.name}`"
         />
         <div class="cc-article-contributors__info">
-          <span class="cc-article-contributors__name">{{
-            contributor.name
-          }}</span>
-          <span class="cc-article-contributors__meta"
-            >{{ contributor.commits }} commits</span
-          >
+          <span class="cc-article-contributors__name">{{ contributor.name }}</span>
+          <span class="cc-article-contributors__meta">{{ contributor.commits }} commits</span>
         </div>
       </a>
     </div>

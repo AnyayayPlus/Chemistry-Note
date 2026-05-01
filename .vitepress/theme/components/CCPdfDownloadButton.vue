@@ -1,35 +1,29 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useData } from 'vitepress';
-import { trackUmamiEvent } from '../utils/umami';
+import { computed } from "vue";
+import { useData } from "vitepress";
+import { trackUmamiEvent } from "../utils/umami";
 
 const { page } = useData();
 
-const PDF_BASE_URL =
-  'https://cnb.cool/Seeridia/Chemistry-Note-File/-/git/raw/main/';
+const PDF_BASE_URL = "https://cnb.cool/Seeridia/Chemistry-Note-File/-/git/raw/main/";
 
 const pdfUrl = computed(() => {
-  const filePath = page.value.filePath ?? '';
-  if (!filePath.endsWith('.md')) return '';
-  const pdfPath = filePath.replace(/\.md$/i, '.pdf');
+  const filePath = page.value.filePath ?? "";
+  if (!filePath.endsWith(".md")) return "";
+  const pdfPath = filePath.replace(/\.md$/i, ".pdf");
   return `${PDF_BASE_URL}${encodeURI(pdfPath)}?download=true`;
 });
 
 // 只有在文档页面才显示下载 PDF 按钮
-const isDocPage = computed(
-  () => (page.value.frontmatter?.layout ?? 'doc') === 'doc',
-);
+const isDocPage = computed(() => (page.value.frontmatter?.layout ?? "doc") === "doc");
 const shouldShow = computed(() => isDocPage.value && pdfUrl.value);
 
-const trackPdfDownload = (kind: 'page' | 'all') => {
-  trackUmamiEvent(
-    kind === 'page' ? 'pdf_download_page' : 'pdf_download_all',
-    {
-      page_path: page.value.relativePath || page.value.filePath || '',
-      page_title: page.value.title || '',
-      source: 'nav_download',
-    },
-  );
+const trackPdfDownload = (kind: "page" | "all") => {
+  trackUmamiEvent(kind === "page" ? "pdf_download_page" : "pdf_download_all", {
+    page_path: page.value.relativePath || page.value.filePath || "",
+    page_title: page.value.title || "",
+    source: "nav_download",
+  });
 };
 </script>
 

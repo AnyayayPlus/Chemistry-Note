@@ -7,18 +7,20 @@
   },
   "devDependencies": {
     "@types/blueimp-md5": "^2.18.2",
+    "@types/node": "^25.6.0",
     "fast-glob": "^3.3.3",
     "markdown-it-mathjax3": "^4",
+    "oxfmt": "^0.47.0",
     "pdf-lib": "^1.17.1",
     "playwright": "^1.57.0",
     "schema-dts": "^1.1.5",
     "vitepress": "2.0.0-alpha.17"
   },
   "scripts": {
-    "predocs:build": "node scripts/download-member-avatars.mjs",
-    "docs:prebuild": "node scripts/download-member-avatars.mjs",
     "docs:dev": "vitepress dev",
     "docs:build": "vitepress build",
-    "docs:preview": "vitepress preview"
+    "docs:preview": "vitepress preview",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check ."
   }
 }

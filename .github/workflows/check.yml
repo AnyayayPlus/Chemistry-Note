@@ -1,0 +1,32 @@
+name: PR Checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Check Format
+        run: bun run format:check
+
+      - name: Check Types
+        run: bunx tsc --noEmit
+
+      - name: Build Docs
+        run: bun run docs:build

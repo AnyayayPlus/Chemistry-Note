@@ -1,7 +1,7 @@
 ---
 description: "讨论化学与科学、技术、社会、环境的联系，包括金属和非金属化合物的性质与应用，以及环境污染问题。"
-
 ---
+
 # 07 · 化学与 STSE
 
 $\text{STSE = Science + Technology + Society + Environment}$
