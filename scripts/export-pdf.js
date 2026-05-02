@@ -205,6 +205,19 @@ const worker = async (page) => {
       ]);
       await document.fonts.ready;
     });
+
+    // 等待 MathJax 渲染完成（最多等 30 秒）
+    await page.evaluate(async () => {
+      if (window.MathJax?.startup?.promise) {
+        await Promise.race([
+          MathJax.startup.promise,
+          new Promise((_, reject) => setTimeout(() => reject(new Error("MathJax timeout")), 30000)),
+        ]);
+      }
+    }).catch((err) => {
+      console.log("MathJax render timeout, continue...", err.message);
+    });
+
     if (debugPdfFonts) {
       const fontDebug = await page.evaluate(() => {
         const sample = document.createElement("strong");
