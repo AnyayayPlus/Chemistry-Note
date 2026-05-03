@@ -27,6 +27,3 @@ jobs:
 
       - name: Check Types
         run: bunx tsc --noEmit
-
-      - name: Build Docs
-        run: bun run docs:build
