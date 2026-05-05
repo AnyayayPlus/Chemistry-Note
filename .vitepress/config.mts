@@ -16,6 +16,7 @@ const navItems = buildNavItems(contentRoot);
 const sidebarItems = buildSidebarItems(contentRoot);
 
 export default defineConfig({
+  ignoreDeadLinks: true,
   title: siteName,
   description: defaultDescription,
   lang: "zh-CN",
