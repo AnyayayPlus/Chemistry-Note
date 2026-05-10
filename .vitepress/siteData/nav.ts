@@ -1,4 +1,5 @@
 import type { DefaultTheme } from "vitepress";
+
 import { encodeLink, getSections } from "./sidebar";
 
 export const buildNavItems = (rootDir: string): DefaultTheme.NavItem[] => {

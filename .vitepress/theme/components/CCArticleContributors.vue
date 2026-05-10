@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
 import { useData } from "vitepress";
+import { computed, onMounted, ref, watch } from "vue";
 
 type GithubCommit = {
   author?: {

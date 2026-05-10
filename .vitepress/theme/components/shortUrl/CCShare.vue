@@ -24,10 +24,11 @@
 </template>
 
 <script setup lang="ts">
-import QRCodeVue from "qrcode.vue";
 import md5 from "blueimp-md5";
-import { computed, onMounted, ref } from "vue";
+import QRCodeVue from "qrcode.vue";
 import { useData } from "vitepress";
+import { computed, onMounted, ref } from "vue";
+
 import { trackUmamiEvent } from "../../utils/umami";
 
 const { page, isDark } = useData();

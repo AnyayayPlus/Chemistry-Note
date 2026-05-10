@@ -1,12 +1,13 @@
 <script setup>
-import DefaultTheme from "vitepress/theme";
 import { useRoute } from "vitepress";
+import DefaultTheme from "vitepress/theme";
 import { nextTick, onMounted, onBeforeUnmount, watch } from "vue";
+
+import CCArticleContributors from "./components/CCArticleContributors.vue";
 import Breadcrumb from "./components/CCBreadCrumb.vue";
+import CCFooter from "./components/CCFooter.vue";
 import PdfDownloadButton from "./components/CCPdfDownloadButton.vue";
 import { CCPageviews, CCWaline } from "./components/waline";
-import CCFooter from "./components/CCFooter.vue";
-import CCArticleContributors from "./components/CCArticleContributors.vue";
 
 const { Layout } = DefaultTheme;
 const route = useRoute();
