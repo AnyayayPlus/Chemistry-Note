@@ -1,10 +1,10 @@
 // bun scripts/export-pdf.js --out-dir pdf-repo --concurrency 4
 
-import { chromium } from "playwright";
 import fg from "fast-glob";
-import http from "http";
 import fs from "fs";
+import http from "http";
 import path from "path";
+import { chromium } from "playwright";
 import url from "url";
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));

@@ -1,6 +1,7 @@
+import type { DefaultTheme } from "vitepress";
+
 import fs from "node:fs";
 import path from "node:path";
-import type { DefaultTheme } from "vitepress";
 
 const sectionDirPattern = /^\d{2}\s/;
 const ignoredRootDirs = new Set([

@@ -1,4 +1,3 @@
-import type { HeadConfig, TransformContext } from "vitepress";
 import type {
   Article,
   BreadcrumbList,
@@ -10,6 +9,7 @@ import type {
   WebSite,
   WithContext,
 } from "schema-dts";
+import type { HeadConfig, TransformContext } from "vitepress";
 
 type JsonLd<T extends Thing> = WithContext<T>;
 
