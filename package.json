@@ -9,6 +9,8 @@
     "@types/blueimp-md5": "^2.18.2",
     "@types/node": "^25.6.0",
     "fast-glob": "^3.3.3",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.2",
     "markdown-it-mathjax3": "^4",
     "oxfmt": "^0.47.0",
     "pdf-lib": "^1.17.1",
@@ -21,6 +23,10 @@
     "docs:build": "vitepress build",
     "docs:preview": "vitepress preview",
     "format": "oxfmt --write .",
-    "format:check": "oxfmt --check ."
+    "format:check": "oxfmt --check .",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*": "oxfmt --no-error-on-unmatched-pattern"
   }
 }

@@ -1,6 +1,7 @@
 <script setup>
 import { pageviewCount } from "@waline/client";
 import { onBeforeUnmount, onMounted, watch } from "vue";
+
 import { useWalineBase } from "./useWalineBase";
 
 const { serverURL, route } = useWalineBase();

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import { useData, useRoute } from "vitepress";
 import type { DefaultTheme } from "vitepress";
+
+import { useData, useRoute } from "vitepress";
+import { computed } from "vue";
 
 type SidebarItem = DefaultTheme.SidebarItem;
 type ChapterLinkItem = {
