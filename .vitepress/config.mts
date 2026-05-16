@@ -1,8 +1,9 @@
-import { defineConfig } from "vitepress";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildSidebarItems } from "./siteData/sidebar";
+import { defineConfig } from "vitepress";
+
 import { buildNavItems } from "./siteData/nav";
+import { buildSidebarItems } from "./siteData/sidebar";
 import { buildTransformHead } from "./siteData/transformHead";
 import mapShortUrl from "./theme/components/shortUrl/mapShortUrl";
 

@@ -1,10 +1,11 @@
 // 参考自 https://notes.linho.cc/s?q=adaf352048
 
+import type { SiteConfig } from "vitepress";
+
 import md5 from "blueimp-md5";
+import fg from "fast-glob";
 import fs from "node:fs";
 import path from "node:path";
-import fg from "fast-glob";
-import type { SiteConfig } from "vitepress";
 
 type ShortUrlMap = {
   [key: string]: string;

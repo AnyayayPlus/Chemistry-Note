@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Waline } from "@waline/client/component";
 import { useData } from "vitepress";
+
 import { useWalineBase } from "./useWalineBase";
 
 const { isDark } = useData();

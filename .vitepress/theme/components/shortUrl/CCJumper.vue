@@ -2,8 +2,8 @@
 
 <script setup lang="ts">
 import axios from "axios";
-import { onMounted } from "vue";
 import { useRouter } from "vitepress";
+import { onMounted } from "vue";
 const router = useRouter();
 onMounted(() => {
   const id = window.location.search.match(/\?q=(.{10})$/)?.[1];

@@ -1,9 +1,9 @@
 // bun scripts/merge-pdf.js --dir pdf-repo
 
-import { PDFDocument } from "pdf-lib";
 import fg from "fast-glob";
 import fs from "fs";
 import path from "path";
+import { PDFDocument } from "pdf-lib";
 import url from "url";
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
