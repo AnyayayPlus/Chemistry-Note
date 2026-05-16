@@ -12,7 +12,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^17.0.2",
     "markdown-it-mathjax3": "^4",
-    "oxfmt": "^0.47.0",
+    "oxfmt": "^0.50.0",
     "pdf-lib": "^1.17.1",
     "playwright": "^1.57.0",
     "schema-dts": "^1.1.5",
