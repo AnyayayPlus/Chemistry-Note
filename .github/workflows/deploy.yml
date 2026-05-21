@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-and-deploy:
-    if: ${{ github.repository_owner == 'Seeridia' }}
+    if: ${{ github.repository_owner == 'AnyayayPlus' }}
     runs-on: ubuntu-latest
 
     steps:

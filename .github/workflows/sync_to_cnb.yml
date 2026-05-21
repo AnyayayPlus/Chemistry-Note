@@ -7,7 +7,7 @@ on:
 
 jobs:
   sync:
-    if: ${{ github.repository_owner == 'Seeridia' }}
+    if: ${{ github.repository_owner == 'AnyayayPlus' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
