@@ -3,6 +3,13 @@
   filter: invert(100%) hue-rotate(180deg) contrast(80%);
 }
 
+/* VitePress 默认将 img 设为 block，这会打断正文里的图文同行排版 */
+img {
+  display: inline-block !important;
+  margin: 0 0.35em;
+  vertical-align: middle;
+}
+
 .avatar-img,
 [data-waline] img {
   filter: none !important;
