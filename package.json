@@ -1,20 +1,20 @@
 {
   "dependencies": {
-    "@waline/client": "^3.13.0",
-    "axios": "^1.13.4",
+    "@waline/client": "^3.15.0",
+    "axios": "^1.16.1",
     "blueimp-md5": "^2.19.0",
-    "qrcode.vue": "^3.8.0"
+    "qrcode.vue": "^3.9.1"
   },
   "devDependencies": {
     "@types/blueimp-md5": "^2.18.2",
-    "@types/node": "^25.6.0",
+    "@types/node": "^25.9.1",
     "fast-glob": "^3.3.3",
     "husky": "^9.1.7",
-    "lint-staged": "^17.0.2",
-    "markdown-it-mathjax3": "^4",
+    "lint-staged": "^17.0.6",
+    "markdown-it-mathjax3": "^4.3.2",
     "oxfmt": "^0.50.0",
     "pdf-lib": "^1.17.1",
-    "playwright": "^1.57.0",
+    "playwright": "^1.60.0",
     "schema-dts": "^1.1.5",
     "vitepress": "2.0.0-alpha.17"
   },
