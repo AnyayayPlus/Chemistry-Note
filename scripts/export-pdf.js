@@ -147,48 +147,6 @@ const pdfBaseStyle = `
     }
 
     @media print {
-        .vp-doc table {
-            display: table !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            table-layout: auto !important;
-            border-collapse: collapse !important;
-            overflow: visible !important;
-            font-size: 11px !important;
-            line-height: 1.45 !important;
-            page-break-inside: auto !important;
-            break-inside: auto !important;
-        }
-
-        .vp-doc thead {
-            display: table-header-group !important;
-        }
-
-        .vp-doc tbody {
-            display: table-row-group !important;
-        }
-
-        .vp-doc tr {
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-        }
-
-        .vp-doc th,
-        .vp-doc td {
-            padding: 6px 8px !important;
-            white-space: normal !important;
-            word-break: break-word !important;
-            overflow-wrap: anywhere !important;
-            vertical-align: top !important;
-        }
-
-        .vp-doc th code,
-        .vp-doc td code {
-            white-space: normal !important;
-            word-break: break-word !important;
-            overflow-wrap: anywhere !important;
-        }
-
         .vp-doc .table-wrapper,
         .vp-doc div:has(> table) {
             width: 100% !important;
@@ -196,40 +154,40 @@ const pdfBaseStyle = `
             overflow: visible !important;
         }
 
-        .vp-doc .pdf-wrap-table table {
-            table-layout: auto !important;
-            font-size: 11px !important;
-        }
-
-        .vp-doc .pdf-wrap-table th,
-        .vp-doc .pdf-wrap-table td {
-            white-space: normal !important;
-            word-break: break-word !important;
-            overflow-wrap: anywhere !important;
-        }
-
-        .vp-doc .pdf-wide-table {
-            width: 117.65% !important;
-            max-width: none !important;
-            overflow: visible !important;
-            transform: scale(0.85);
-            transform-origin: top left;
-        }
-
-        .vp-doc .pdf-wide-table table {
+        .vp-doc table {
             width: 100% !important;
-            max-width: none !important;
-            table-layout: auto !important;
-            font-size: 10px !important;
-            line-height: 1.35 !important;
+            max-width: 100% !important;
+            table-layout: fixed !important;
+            font-size: 8px !important;
+            line-height: 1.2 !important;
         }
 
-        .vp-doc .pdf-wide-table th,
-        .vp-doc .pdf-wide-table td {
-            padding: 4px 6px !important;
-            white-space: nowrap !important;
-            word-break: normal !important;
-            overflow-wrap: normal !important;
+        .vp-doc th,
+        .vp-doc td {
+            min-width: 0 !important;
+            padding: 3px 4px !important;
+            white-space: normal !important;
+            overflow: hidden !important;
+            overflow-wrap: anywhere !important;
+            vertical-align: middle !important;
+        }
+
+        .vp-doc table:has(tr > :nth-child(5)) th:first-child,
+        .vp-doc table:has(tr > :nth-child(5)) td:first-child {
+            width: 12% !important;
+        }
+
+        .vp-doc th mjx-container,
+        .vp-doc td mjx-container {
+            max-width: 100% !important;
+            overflow: hidden !important;
+        }
+
+        .vp-doc th mjx-container > svg,
+        .vp-doc td mjx-container > svg {
+            width: auto !important;
+            max-width: 100% !important;
+            height: auto !important;
         }
     }
 `;

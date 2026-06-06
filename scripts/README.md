@@ -46,6 +46,16 @@ bun scripts/export-pdf.js --list scripts/pdf-repo-test.txt --out-dir pdf-repo-si
 
 调试某一页时，把对应的 `.html` 路径写进 `scripts/pdf-repo-test.txt`，然后运行 `bun run pdf:single`。
 
+该列表文件用于本地调试，不提交到仓库。首次运行前可先创建：
+
+```bash
+touch scripts/pdf-repo-test.txt
+
+# 文件内容可以是
+# 03 分子空间结构与物质性质/01 价层电子对互斥模型.html
+# 02 微粒间作用力与物质性质/04 金属键 金属晶体.html
+```
+
 ## pdf:all
 
 ```bash
