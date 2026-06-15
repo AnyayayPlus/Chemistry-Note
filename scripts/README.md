@@ -3,8 +3,12 @@
 本文档说明 `package.json` 中两个 PDF 导出命令的用途和调试方法：
 
 ```json
-"pdf:single": "bun scripts/export-pdf.js --list scripts/pdf-repo-test.txt --out-dir pdf-repo-single --concurrency 1",
-"pdf:all": "bun scripts/export-pdf.js --out-dir pdf-repo --concurrency 4"
+{
+  "scripts": {
+    "pdf:single": "bun scripts/export-pdf.js --list scripts/pdf-repo-test.txt --out-dir pdf-repo-single --concurrency 1",
+    "pdf:all": "bun scripts/export-pdf.js --out-dir pdf-repo --concurrency 4"
+  }
+}
 ```
 
 ## 前置条件
