@@ -145,6 +145,51 @@ const pdfBaseStyle = `
         font-family: var(--vp-font-family-base) !important;
         font-weight: 700 !important;
     }
+
+    @media print {
+        .vp-doc .table-wrapper,
+        .vp-doc div:has(> table) {
+            width: 100% !important;
+            max-width: 100% !important;
+            overflow: visible !important;
+        }
+
+        .vp-doc table {
+            width: 100% !important;
+            max-width: 100% !important;
+            table-layout: fixed !important;
+            font-size: 8px !important;
+            line-height: 1.2 !important;
+        }
+
+        .vp-doc th,
+        .vp-doc td {
+            min-width: 0 !important;
+            padding: 3px 4px !important;
+            white-space: normal !important;
+            overflow: hidden !important;
+            overflow-wrap: anywhere !important;
+            vertical-align: middle !important;
+        }
+
+        .vp-doc table:has(tr > :nth-child(5)) th:first-child,
+        .vp-doc table:has(tr > :nth-child(5)) td:first-child {
+            width: 12% !important;
+        }
+
+        .vp-doc th mjx-container,
+        .vp-doc td mjx-container {
+            max-width: 100% !important;
+            overflow: hidden !important;
+        }
+
+        .vp-doc th mjx-container > svg,
+        .vp-doc td mjx-container > svg {
+            width: auto !important;
+            max-width: 100% !important;
+            height: auto !important;
+        }
+    }
 `;
 for (let i = 0; i < concurrency; i += 1) {
   const page = await browser.newPage();

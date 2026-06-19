@@ -11,3 +11,6 @@ output/
 *.pdf
 .github/changed-pages/
 data/generated/
+pdf-repo-single/
+pdf-repo/
+scripts/pdf-repo-test.txt
