@@ -55,14 +55,25 @@ jobs:
 
       # 第七步：部署到服务器
       - name: Deploy to Server
-        uses: appleboy/scp-action@v1.0.0
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ".vitepress/dist/*"
-          target: ${{ secrets.TARGET_DIR }}
-          strip_components: 2
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          TARGET_DIR: ${{ secrets.TARGET_DIR }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$TARGET_DIR" ]; then
+            echo "TARGET_DIR is empty"
+            exit 1
+          fi
+
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no "$SERVER_USER@$SERVER_HOST" "mkdir -p '$TARGET_DIR'"
+          rsync -az --delete -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" .vitepress/dist/ "$SERVER_USER@$SERVER_HOST:$TARGET_DIR/"
 
   export-pdfs:
     needs: build-and-deploy
