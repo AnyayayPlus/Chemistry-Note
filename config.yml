@@ -1,0 +1,51 @@
+# 项目配置
+
+# 导出相关配置
+export:
+  # 增量导出检测规则
+  changedPages:
+    # 默认输出目录：保存 export-all.txt、changed-pages.txt、deleted-pages.txt
+    outDir: ".github/changed-pages"
+    # 全局变更规则：这些路径发生变化时，直接触发全量 PDF 导出
+    globalChange:
+      - ".vitepress/**"
+      - "public/**"
+      - "data/**"
+      - "package.json"
+      - "package-lock.json"
+      - "bun.lock"
+      - "config.yml"
+    # 源文件后缀：这些源文件会被映射成对应的 HTML 页面参与增量导出
+    sourceExtensions:
+      - ".md"
+
+  # PDF 页面导出规则
+  pdf:
+    # 正向规则：命中的 HTML 页面才有参与 PDF 导出
+    include:
+      - "**/*.html"
+    # 反向规则：在正向命中后，继续排除不需要导出的页面
+    exclude:
+      - "404.html"
+      - "**/index.html"
+      - "s.html"
+      - "README.html"
+      - "hidePage/**"
+      - "00 说明/向明天 · 2026 高考.html"
+    # VitePress 构建产物目录
+    distDir: ".vitepress/dist"
+    # PDF 输出目录
+    outDir: "pdf-repo"
+    # 输出并发设置
+    concurrency:
+      default: 8
+      min: 1
+      max: 16
+    # 纸张与页边距设置
+    page:
+      format: "A4"
+      margin:
+        top: "10mm"
+        bottom: "10mm"
+        left: "10mm"
+        right: "10mm"

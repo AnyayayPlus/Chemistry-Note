@@ -6,7 +6,7 @@
 {
   "scripts": {
     "pdf:single": "bun scripts/export-pdf.js --list scripts/pdf-repo-test.txt --out-dir pdf-repo-single --concurrency 1",
-    "pdf:all": "bun scripts/export-pdf.js --out-dir pdf-repo --concurrency 4"
+    "pdf:all": "bun scripts/export-pdf.js --concurrency 4"
   }
 }
 ```
@@ -20,6 +20,57 @@ bun run docs:build
 ```
 
 `scripts/export-pdf.js` 会读取 `.vitepress/dist` 下的 HTML 文件，并启动一个本地 HTTP 服务给 Playwright Chromium 访问。它不是直接读取 Markdown 文件，也不是通过 `file://` 打开页面。
+
+## 导出配置
+
+导出规则集中放在项目根目录的 `config.yml`：
+
+```yaml
+export:
+  changedPages:
+    outDir: ".github/changed-pages"
+    globalChange:
+      - ".vitepress/**"
+      - "public/**"
+      - "data/**"
+      - "package.json"
+      - "bun.lock"
+      - "config.yml"
+    sourceExtensions:
+      - ".md"
+  pdf:
+    distDir: ".vitepress/dist"
+    outDir: "pdf-repo"
+    concurrency:
+      default: 2
+      min: 1
+      max: 8
+    include:
+      - "**/*.html"
+    exclude:
+      - "404.html"
+      - "**/index.html"
+      - "s.html"
+      - "README.html"
+      - "hidePage/**"
+    page:
+      format: "A4"
+      margin:
+        top: "10mm"
+        bottom: "10mm"
+        left: "10mm"
+        right: "10mm"
+```
+
+- `changedPages.outDir`：变更检测结果的默认输出目录。
+- `pdf.distDir`：VitePress 构建产物目录。
+- `pdf.outDir`：PDF 默认输出目录，命令行 `--out-dir` 可覆盖。
+- `pdf.concurrency`：PDF 导出并发的默认值和上下限。
+- `pdf.include`：正向规则，决定哪些 HTML 页面可以参与 PDF 导出。
+- `pdf.exclude`：反向规则，在正向命中后排除不需要导出的页面。
+- `pdf.page`：PDF 纸张和页边距。
+- `changedPages.globalChange`：这些路径变更时触发全量导出。
+- `changedPages.sourceExtensions`：增量检测时会映射为 HTML 页面的源文件后缀。
 
 ## pdf:single
 
@@ -69,7 +120,7 @@ bun run pdf:all
 等价于：
 
 ```bash
-bun scripts/export-pdf.js --out-dir pdf-repo --concurrency 4
+bun scripts/export-pdf.js --concurrency 4
 ```
 
 用途：导出 `.vitepress/dist` 下所有符合条件的 HTML 页面，适合最终批量生成整站 PDF。
@@ -77,7 +128,7 @@ bun scripts/export-pdf.js --out-dir pdf-repo --concurrency 4
 参数说明：
 
 - 未传 `--list`：脚本会自动扫描 `.vitepress/dist/**/*.html`。
-- `--out-dir pdf-repo`：PDF 输出到项目根目录下的 `pdf-repo`。
+- 未传 `--out-dir`：PDF 输出到 `config.yml` 中的 `export.pdf.outDir`。
 - `--concurrency 4`：同时使用 4 个 Playwright 页面并发导出，速度比单页调试快。
 
 脚本会自动忽略以下页面：
