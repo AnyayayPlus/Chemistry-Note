@@ -31,7 +31,9 @@ export:
       - "s.html"
       - "README.html"
       - "hidePage/**"
+      - "scripts/**"
       - "00 说明/向明天 · 2026 高考.html"
+      - "00 说明/贡献指南.html"
     # VitePress 构建产物目录
     distDir: ".vitepress/dist"
     # PDF 输出目录
