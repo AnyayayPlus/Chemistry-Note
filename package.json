@@ -13,10 +13,10 @@
     "lint-staged": "^17.0.6",
     "markdown-it-mathjax3": "^4.3.2",
     "oxfmt": "^0.50.0",
-    "pdf-lib": "^1.17.1",
     "playwright": "^1.60.0",
     "schema-dts": "^1.1.5",
-    "vitepress": "2.0.0-alpha.17"
+    "vitepress": "2.0.0-alpha.17",
+    "yaml": "^2.9.0"
   },
   "scripts": {
     "docs:dev": "vitepress dev",
@@ -26,7 +26,7 @@
     "format:check": "oxfmt --check .",
     "prepare": "husky",
     "pdf:single": "bun scripts/export-pdf.js --list scripts/pdf-repo-test.txt --out-dir pdf-repo-single --concurrency 1",
-    "pdf:all": "bun scripts/export-pdf.js --out-dir pdf-repo --concurrency 4"
+    "pdf:all": "bun scripts/export-pdf.js --concurrency 4"
   },
   "lint-staged": {
     "*": "oxfmt --no-error-on-unmatched-pattern"
