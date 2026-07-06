@@ -5,46 +5,66 @@ on:
     branches:
       - master
 
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
 jobs:
   build-and-deploy:
     if: ${{ github.repository_owner == 'AnyayayPlus' }}
     runs-on: ubuntu-latest
+    outputs:
+      export_all: ${{ steps.changed_pages.outputs.export_all }}
+      changed_count: ${{ steps.changed_pages.outputs.changed_count }}
+      deleted_count: ${{ steps.changed_pages.outputs.deleted_count }}
+      has_pdf_changes: ${{ steps.changed_pages.outputs.has_pdf_changes }}
+      needs_pdf_export: ${{ steps.changed_pages.outputs.needs_pdf_export }}
 
     steps:
-      # 第一步：迁出代码
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # 第二步：设置 Bun 环境
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
-      # 第三步：安装依赖
       - name: Install Dependencies
-        run: bun install
+        run: bun install --frozen-lockfile
 
-      # 第四步：打包项目
       - name: Build Project
         run: bun run docs:build
 
-      # 第五步：检测变更页面
       - name: Detect changed pages
         id: changed_pages
         run: |
+          set -euo pipefail
+
           bun scripts/changed-pages.js --base "${{ github.event.before }}" --head "${{ github.sha }}" --out-dir .github/changed-pages
+
           export_all=$(cat .github/changed-pages/export-all.txt)
           changed_count=$(grep -c . .github/changed-pages/changed-pages.txt || true)
           deleted_count=$(grep -c . .github/changed-pages/deleted-pages.txt || true)
+
+          needs_pdf_export=false
+          has_pdf_changes=false
+          if [ "$export_all" = "true" ] || [ "$changed_count" != "0" ]; then
+            needs_pdf_export=true
+            has_pdf_changes=true
+          elif [ "$deleted_count" != "0" ]; then
+            has_pdf_changes=true
+          fi
+
           echo "export_all=$export_all" >> $GITHUB_OUTPUT
           echo "changed_count=$changed_count" >> $GITHUB_OUTPUT
           echo "deleted_count=$deleted_count" >> $GITHUB_OUTPUT
+          echo "needs_pdf_export=$needs_pdf_export" >> $GITHUB_OUTPUT
+          echo "has_pdf_changes=$has_pdf_changes" >> $GITHUB_OUTPUT
 
-      # 第六步：上传构建产物供 PDF 导出使用
       - name: Upload build artifacts
+        if: steps.changed_pages.outputs.has_pdf_changes == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: site-dist
@@ -53,23 +73,36 @@ jobs:
             .github/changed-pages
           retention-days: 1
 
-      # 第七步：部署到服务器
       - name: Deploy to Server
-        uses: appleboy/scp-action@v1.0.0
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ".vitepress/dist/*"
-          target: ${{ secrets.TARGET_DIR }}
-          strip_components: 2
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          TARGET_DIR: ${{ secrets.TARGET_DIR }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$TARGET_DIR" ]; then
+            echo "TARGET_DIR is empty"
+            exit 1
+          fi
+
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+          SSH_OPTS="-i $HOME/.ssh/deploy_key -o StrictHostKeyChecking=no"
+          ssh $SSH_OPTS "$SERVER_USER@$SERVER_HOST" "mkdir -p '$TARGET_DIR'"
+          rsync -az --delete -e "ssh $SSH_OPTS" .vitepress/dist/ "$SERVER_USER@$SERVER_HOST:$TARGET_DIR/"
 
   export-pdfs:
     needs: build-and-deploy
+    if: needs.build-and-deploy.outputs.has_pdf_changes == 'true'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
+        if: needs.build-and-deploy.outputs.needs_pdf_export == 'true'
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -81,56 +114,46 @@ jobs:
           path: .
 
       - name: Setup Bun
+        if: needs.build-and-deploy.outputs.needs_pdf_export == 'true'
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
       - name: Install Dependencies
-        run: bun install
+        if: needs.build-and-deploy.outputs.needs_pdf_export == 'true'
+        run: bun install --frozen-lockfile
 
       - name: Install CJK fonts
+        if: needs.build-and-deploy.outputs.needs_pdf_export == 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y fonts-noto-cjk fonts-noto-cjk-extra
           sudo fc-cache -fv
 
-      - name: Read changed pages info
-        id: changed_pages
-        run: |
-          export_all=$(cat .github/changed-pages/export-all.txt 2>/dev/null || echo "false")
-          changed_count=$(grep -c . .github/changed-pages/changed-pages.txt 2>/dev/null || true)
-          deleted_count=$(grep -c . .github/changed-pages/deleted-pages.txt 2>/dev/null || true)
-          echo "export_all=$export_all" >> $GITHUB_OUTPUT
-          echo "changed_count=$changed_count" >> $GITHUB_OUTPUT
-          echo "deleted_count=$deleted_count" >> $GITHUB_OUTPUT
-
       - name: Clone CNB PDF Repository
-        if: steps.changed_pages.outputs.export_all == 'true' || steps.changed_pages.outputs.changed_count != '0' || steps.changed_pages.outputs.deleted_count != '0'
         run: |
           git clone --depth 1 https://cnb:${{ secrets.CNB_TOKEN }}@cnb.cool/Seeridia/Chemistry-Note-File.git pdf-repo
 
       - name: Install Playwright Browsers
-        if: steps.changed_pages.outputs.export_all == 'true' || steps.changed_pages.outputs.changed_count != '0'
+        if: needs.build-and-deploy.outputs.needs_pdf_export == 'true'
         run: npx playwright install --with-deps chromium
 
-      - name: Export PDFs (all)
-        if: steps.changed_pages.outputs.export_all == 'true'
+      - name: Export PDFs
+        if: needs.build-and-deploy.outputs.needs_pdf_export == 'true'
+        env:
+          EXPORT_ALL: ${{ needs.build-and-deploy.outputs.export_all }}
         run: |
-          cores=$(nproc)
-          concurrency=$(( cores * 2 ))
-          [ "$concurrency" -gt 8 ] && concurrency=8
-          PDF_USE_GOOGLE_FONT=1 bun scripts/export-pdf.js --out-dir pdf-repo --concurrency "$concurrency"
+          set -euo pipefail
 
-      - name: Export PDFs (changed)
-        if: steps.changed_pages.outputs.export_all != 'true' && steps.changed_pages.outputs.changed_count != '0'
-        run: |
-          cores=$(nproc)
-          concurrency=$(( cores * 2 ))
-          [ "$concurrency" -gt 8 ] && concurrency=8
-          PDF_USE_GOOGLE_FONT=1 bun scripts/export-pdf.js --list .github/changed-pages/changed-pages.txt --out-dir pdf-repo --concurrency "$concurrency"
+          concurrency=$(( $(nproc) * 2 ))
+          if [ "$EXPORT_ALL" = "true" ]; then
+            PDF_USE_GOOGLE_FONT=1 bun scripts/export-pdf.js --out-dir pdf-repo --concurrency "$concurrency"
+          else
+            PDF_USE_GOOGLE_FONT=1 bun scripts/export-pdf.js --list .github/changed-pages/changed-pages.txt --out-dir pdf-repo --concurrency "$concurrency"
+          fi
 
       - name: Remove deleted PDFs
-        if: steps.changed_pages.outputs.deleted_count != '0'
+        if: needs.build-and-deploy.outputs.deleted_count != '0'
         run: |
           while IFS= read -r file; do
             [ -z "$file" ] && continue
@@ -139,7 +162,6 @@ jobs:
           done < .github/changed-pages/deleted-pages.txt
 
       - name: Push PDF updates
-        if: steps.changed_pages.outputs.export_all == 'true' || steps.changed_pages.outputs.changed_count != '0' || steps.changed_pages.outputs.deleted_count != '0'
         run: |
           cd pdf-repo
           git config user.name "github-actions[bot]"

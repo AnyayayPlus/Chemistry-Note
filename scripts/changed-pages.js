@@ -3,7 +3,15 @@ import fs from "fs";
 import path from "path";
 import url from "url";
 
+import {
+  isTrackedSourcePage,
+  loadProjectConfig,
+  matchesAnyPattern,
+  shouldExportPdfPage,
+} from "./project-config.js";
+
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
+const projectConfig = loadProjectConfig(path.resolve(__dirname, ".."));
 
 const args = process.argv.slice(2);
 const getArgValue = (flag) => {
@@ -19,7 +27,7 @@ const head = getArgValue("--head") || process.env.GIT_HEAD || "HEAD";
 const outDirInput = getArgValue("--out-dir");
 const outDir = outDirInput
   ? path.resolve(process.cwd(), outDirInput)
-  : path.resolve(__dirname, "../.github/changed-pages");
+  : path.resolve(__dirname, "..", projectConfig.export.changedPages.outDir);
 
 // 全 0 的 SHA 表示“无基准”，需要全量导出
 const zeroSha = /^0+$/;
@@ -29,15 +37,7 @@ const isGlobalChange = (filePath) => {
     return false;
   }
   const normalized = filePath.replace(/\\/g, "/");
-  // 如果是下面这些路径的变更，则直接视为全局变更
-  return (
-    normalized.startsWith(".vitepress/") ||
-    normalized.startsWith("public/") ||
-    normalized.startsWith("data/") ||
-    normalized === "package.json" ||
-    normalized === "package-lock.json" ||
-    normalized === "bun.lock"
-  );
+  return matchesAnyPattern(normalized, projectConfig.export.changedPages.globalChange);
 };
 
 // 将 .md 路径映射为站点输出的 .html 路径
@@ -46,7 +46,7 @@ const mdToHtml = (filePath) => {
     return null;
   }
   const normalized = filePath.replace(/\\/g, "/");
-  if (!/\.md$/i.test(normalized)) {
+  if (!isTrackedSourcePage(normalized, projectConfig)) {
     return null;
   }
   const dir = path.posix.dirname(normalized);
@@ -130,8 +130,14 @@ if (!base || zeroSha.test(base)) {
 
 fs.mkdirSync(outDir, { recursive: true });
 
-const changedList = outputs.forceAll ? [] : Array.from(outputs.changed).sort();
-const deletedList = Array.from(outputs.deleted).sort();
+const changedList = outputs.forceAll
+  ? []
+  : Array.from(outputs.changed)
+      .filter((file) => shouldExportPdfPage(file, projectConfig))
+      .sort();
+const deletedList = Array.from(outputs.deleted)
+  .filter((file) => shouldExportPdfPage(file, projectConfig))
+  .sort();
 
 // 写入结果文件，供后续工作流读取
 fs.writeFileSync(path.join(outDir, "export-all.txt"), outputs.forceAll ? "true" : "false");

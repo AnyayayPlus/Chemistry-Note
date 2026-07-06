@@ -1,4 +1,6 @@
-.vscode/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
 .DS_Store
 node_modules/
 export/tmp/
@@ -11,3 +13,6 @@ output/
 *.pdf
 .github/changed-pages/
 data/generated/
+pdf-repo-single/
+pdf-repo/
+scripts/pdf-repo-test.txt
