@@ -15,6 +15,7 @@
     "oxfmt": "^0.50.0",
     "playwright": "^1.60.0",
     "schema-dts": "^1.1.5",
+    "typescript": "6.0.3",
     "vitepress": "2.0.0-alpha.18",
     "yaml": "^2.9.0"
   },
@@ -24,6 +25,7 @@
     "docs:preview": "vitepress preview",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
+    "typecheck": "tsc --noEmit",
     "prepare": "husky",
     "pdf:single": "bun scripts/export-pdf.js --list scripts/pdf-repo-test.txt --out-dir pdf-repo-single --concurrency 1",
     "pdf:all": "bun scripts/export-pdf.js --concurrency 4"

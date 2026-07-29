@@ -6,18 +6,23 @@ on:
     branches:
       - master
 
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.3.14
 
       - name: Install Dependencies
         run: bun install --frozen-lockfile
@@ -26,4 +31,4 @@ jobs:
         run: bun run format:check
 
       - name: Check Types
-        run: bunx tsc --noEmit
+        run: bun run typecheck
