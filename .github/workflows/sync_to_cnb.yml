@@ -5,24 +5,31 @@ on:
     branches:
       - master
 
+permissions:
+  contents: read
+
 jobs:
   sync:
     if: ${{ github.repository_owner == 'AnyayayPlus' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Sync to CNB Repository
+        env:
+          CNB_TOKEN: ${{ secrets.CNB_TOKEN }}
         run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:${{ github.workspace }} \
-            -w ${{ github.workspace }} \
-            -e PLUGIN_TARGET_URL="https://cnb.cool/Seeridia/Chemistry-Note.git" \
-            -e PLUGIN_AUTH_TYPE="https" \
-            -e PLUGIN_USERNAME="cnb" \
-            -e PLUGIN_PASSWORD="${{ secrets.CNB_TOKEN }}" \
-            -e PLUGIN_FORCE="true" \
-            -e PLUGIN_SYNC_TAGS="true" \
-            tencentcom/git-sync:latest
+          set -euo pipefail
+
+          if [ -z "$CNB_TOKEN" ]; then
+            echo "CNB_TOKEN is empty"
+            exit 1
+          fi
+
+          auth_header=$(printf 'cnb:%s' "$CNB_TOKEN" | base64 | tr -d '\n')
+          git remote add cnb https://cnb.cool/Seeridia/Chemistry-Note.git
+          git -c http.extraHeader="Authorization: Basic $auth_header" \
+            push --force cnb "HEAD:refs/heads/${GITHUB_REF_NAME}" --tags
