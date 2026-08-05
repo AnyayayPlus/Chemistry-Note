@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitepress";
+import lightbox from "vitepress-plugin-lightbox";
 
 import { buildNavItems } from "./siteData/nav";
 import { buildSidebarItems } from "./siteData/sidebar";
@@ -104,6 +105,9 @@ export default defineConfig({
   },
   markdown: {
     math: true,
+    config: (md) => {
+      md.use(lightbox, {});
+    },
   },
   rewrites: {
     "hidePage/shortUrl.md": "s.md",
