@@ -12,12 +12,12 @@
     "husky": "^9.1.7",
     "lint-staged": "^17.0.6",
     "markdown-it-mathjax3": "^4.3.2",
+    "medium-zoom": "^1.1.0",
     "oxfmt": "^0.50.0",
     "playwright": "^1.60.0",
     "schema-dts": "^1.1.5",
     "typescript": "6.0.3",
     "vitepress": "2.0.0-alpha.18",
-    "vitepress-plugin-lightbox": "^1.0.3",
     "yaml": "^2.9.0"
   },
   "scripts": {

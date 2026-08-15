@@ -19,6 +19,15 @@ img {
   margin: 0 !important;
 }
 
+.medium-zoom-overlay {
+  backdrop-filter: blur(5rem);
+}
+
+.medium-zoom-overlay,
+.medium-zoom-image--opened {
+  z-index: 999;
+}
+
 /* 页面切换时正文上滑动画 */
 .vp-doc > div,
 .VPHome {
