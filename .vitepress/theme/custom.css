@@ -28,6 +28,12 @@ img {
   z-index: 999;
 }
 
+/* 预览副本会继承原图的内联 zoom 和全局 margin，导致 medium-zoom 重复缩放并定位偏移 */
+.medium-zoom-image--opened {
+  zoom: 1 !important;
+  margin: 0 !important;
+}
+
 /* 页面切换时正文上滑动画 */
 .vp-doc > div,
 .VPHome {
