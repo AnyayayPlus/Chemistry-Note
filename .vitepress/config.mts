@@ -2,6 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitepress";
 
+import { configureImageOptimization } from "./markdown/imageOptimization";
 import { buildNavItems } from "./siteData/nav";
 import { buildSidebarItems } from "./siteData/sidebar";
 import { buildTransformHead } from "./siteData/transformHead";
@@ -104,6 +105,7 @@ export default defineConfig({
   },
   markdown: {
     math: true,
+    config: configureImageOptimization,
   },
   rewrites: {
     "hidePage/shortUrl.md": "s.md",

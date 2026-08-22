@@ -41,6 +41,12 @@ const expandCurrentSidebarGroup = () => {
 const setupImageZoom = () => {
   if (!imageZoom) return;
   imageZoom.detach();
+  document.querySelectorAll(`${contentImageSelector}[data-esa-optimized]`).forEach((image) => {
+    if (!(image instanceof HTMLImageElement)) return;
+    const originalUrl = new URL(image.currentSrc || image.src, window.location.href);
+    originalUrl.searchParams.delete("image_process");
+    image.dataset.zoomSrc = originalUrl.href;
+  });
   imageZoom.attach(contentImageSelector);
 };
 
