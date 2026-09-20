@@ -1,4 +1,5 @@
 <script setup>
+import mediumZoom from "medium-zoom";
 import { useRoute } from "vitepress";
 import DefaultTheme from "vitepress/theme";
 import { nextTick, onMounted, onBeforeUnmount, watch } from "vue";
@@ -11,6 +12,8 @@ import { bootstrapSiteSettings } from "./composables/useSiteSettings";
 
 const { Layout } = DefaultTheme;
 const route = useRoute();
+const contentImageSelector = ".vp-doc img:not([data-no-zoom])";
+let imageZoom;
 
 const normalizePath = (p) => p.replace(/\/$/, "");
 const runOnClientFrame = (cb) => {
@@ -35,6 +38,23 @@ const expandCurrentSidebarGroup = () => {
   });
 };
 
+const setupImageZoom = () => {
+  if (!imageZoom) return;
+  imageZoom.detach();
+  document.querySelectorAll(`${contentImageSelector}[data-esa-optimized]`).forEach((image) => {
+    if (!(image instanceof HTMLImageElement)) return;
+    const originalUrl = new URL(image.currentSrc || image.src, window.location.href);
+    originalUrl.searchParams.delete("image_process");
+    image.dataset.zoomSrc = originalUrl.href;
+  });
+  imageZoom.attach(contentImageSelector);
+};
+
+const refreshPageEnhancements = () => {
+  expandCurrentSidebarGroup();
+  setupImageZoom();
+};
+
 const onSectionTitleClick = (event) => {
   const target = event.target;
   if (!(target instanceof Element)) return;
@@ -50,12 +70,15 @@ const onSectionTitleClick = (event) => {
 };
 
 onMounted(() => {
+  imageZoom = mediumZoom({ background: "transparent" });
   bootstrapSiteSettings();
   document.addEventListener("click", onSectionTitleClick, true);
-  runOnClientFrame(expandCurrentSidebarGroup);
+  runOnClientFrame(refreshPageEnhancements);
 });
 
 onBeforeUnmount(() => {
+  imageZoom?.detach();
+  imageZoom = undefined;
   document.removeEventListener("click", onSectionTitleClick, true);
 });
 
@@ -63,7 +86,7 @@ watch(
   () => route.path,
   async () => {
     await nextTick();
-    runOnClientFrame(expandCurrentSidebarGroup);
+    runOnClientFrame(refreshPageEnhancements);
   },
   { immediate: true },
 );
