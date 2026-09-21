@@ -1,4 +1,4 @@
-/_ 防止放大图片被导航栏、侧边栏遮挡 _/ .medium-zoom-overlay {
+.medium-zoom-overlay {
   z-index: 999 !important;
 }
 .medium-zoom-image {
