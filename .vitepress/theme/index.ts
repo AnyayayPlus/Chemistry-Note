@@ -1,6 +1,8 @@
+import type { Theme } from "vitepress";
+
 import { useRoute } from "vitepress";
 import DefaultTheme from "vitepress/theme";
-import { nextTick, watch, onMounted } from "vue";
+import { nextTick, watch, onMounted, onUnmounted } from "vue";
 
 import "./custom.css";
 import "./style.css";
@@ -10,66 +12,66 @@ import CCChapterOverview from "./components/CCChapterOverview.vue";
 import CCpdfDownloadButton from "./components/CCpdfDownloadButton.vue";
 import layout from "./layout.vue";
 
-export default {
+const theme: Theme = {
   extends: DefaultTheme,
   Layout: layout,
+
   setup() {
     const route = useRoute();
-    let mask = null;
+    let mask: HTMLDivElement | null = null;
 
-    function openPreview(src) {
+    // 封装esc事件，加上onUnmounted销毁监听
+    function escHandler(ev: KeyboardEvent) {
+      if (ev.key === "Escape" && mask) {
+        mask.remove();
+        mask = null;
+      }
+    }
+
+    function openPreview(src: string) {
       if (mask) return;
+
       mask = document.createElement("div");
       mask.id = "img-preview-mask";
       mask.style.cssText = `
-        position:fixed; inset:0; background:rgba(0,0,0,0.85);
-        z-index:9999; display:flex; align-items:center; justify-content:center;
-        cursor:zoom-out;
+        position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+        z-index: 9999; display: flex; align-items: center;
+        justify-content: center; cursor: zoom-out;
       `;
+
       const previewImg = document.createElement("img");
       previewImg.src = src;
       previewImg.style.cssText = `
-        max-width:90vw; max-height:90vh; object-fit:contain;
+        max-width: 90vw; max-height: 90vh; object-fit: contain;
       `;
       mask.appendChild(previewImg);
       document.body.appendChild(mask);
 
-      // 点击遮罩关闭
       mask.onclick = () => {
-        mask.remove();
+        mask?.remove();
         mask = null;
       };
-      // ESC关闭
-      function escHandler(ev) {
-        if (ev.key === "Escape" && mask) {
-          mask.remove();
-          mask = null;
-          document.removeEventListener("keydown", escHandler);
-        }
-      }
       document.addEventListener("keydown", escHandler);
     }
 
     function bindPreview() {
-      const main = document.querySelector(".main");
+      const main = document.querySelector<HTMLElement>(".main");
       if (!main) return;
-      // 先移除旧监听，防止重复
-      main.onclick = null;
-      // 事件委托：监听main容器，判断点击目标是不是图片
-      main.onclick = function (e) {
-        const img = e.target.closest("img");
-        if (img) {
-          e.preventDefault();
-          e.stopPropagation();
-          openPreview(img.src);
-        }
+
+      main.onclick = (e: MouseEvent) => {
+        const target = e.target;
+        if (!(target instanceof Element)) return;
+        const imgEl = target.closest("img");
+        if (!imgEl) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+        openPreview(imgEl.src);
       };
     }
 
-    onMounted(() => {
-      bindPreview();
-    });
-
+    onMounted(bindPreview);
+    // 路由切换先移除旧的esc监听，防止堆积
     watch(
       () => route.path,
       async () => {
@@ -77,9 +79,21 @@ export default {
         bindPreview();
       },
     );
+
+    // 组件销毁，清理键盘监听，避免内存泄漏 + TS类型报错
+    onUnmounted(() => {
+      document.removeEventListener("keydown", escHandler);
+      if (mask) {
+        mask.remove();
+        mask = null;
+      }
+    });
   },
+
   enhanceApp({ app }) {
     app.component("CCpdfDownloadButton", CCpdfDownloadButton);
     app.component("CCChapterOverview", CCChapterOverview);
   },
 };
+
+export default theme;
