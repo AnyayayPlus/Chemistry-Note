@@ -26,7 +26,7 @@ defineProps<{
 .CCAppreciatorsItem {
   display: flex;
   flex-direction: column;
-  padding: 20px;
+  padding: 14px;
   border-radius: 8px;
   width: 100%;
   height: 100%;
@@ -45,19 +45,19 @@ defineProps<{
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .name {
   flex: 1;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 14px;
   color: var(--vp-c-text-1);
   line-height: normal;
 }
 
 .amount {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--vp-c-brand-1);
   background-color: var(--vp-c-bg-alt);
@@ -67,15 +67,15 @@ defineProps<{
 
 .message {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.5;
   color: var(--vp-c-text-2);
   flex-grow: 1;
 }
 
 .date {
-  margin: 16px 0 0 0;
-  font-size: 12px;
+  margin: 10px 0 0 0;
+  font-size: 11px;
   color: var(--vp-c-text-3);
   text-align: right;
 }

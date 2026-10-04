@@ -146,6 +146,17 @@
           "link": "https://github.com/me-o"
         }
       ]
+    },
+    {
+      "avatar": "/images/members/14-a1fredbao.png",
+      "name": "Alfred Bao",
+      "title": "Collaborator",
+      "links": [
+        {
+          "icon": "github",
+          "link": "https://github.com/a1fredbao"
+        }
+      ]
     }
   ]
 }

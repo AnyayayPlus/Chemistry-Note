@@ -1,4 +1,4 @@
-// bun scripts/export-pdf.js --out-dir pdf-repo --concurrency 4
+// bun scripts/export-pdf.js --concurrency 4
 
 import fg from "fast-glob";
 import fs from "fs";
@@ -7,8 +7,12 @@ import path from "path";
 import { chromium } from "playwright";
 import url from "url";
 
+import { loadProjectConfig, shouldExportPdfPage } from "./project-config.js";
+
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
-const distDir = path.resolve(__dirname, "../.vitepress/dist");
+const projectConfig = loadProjectConfig(path.resolve(__dirname, ".."));
+const pdfConfig = projectConfig.export.pdf;
+const distDir = path.resolve(__dirname, "..", pdfConfig.distDir);
 
 const args = process.argv.slice(2);
 const listIndex = args.indexOf("--list");
@@ -31,12 +35,20 @@ if (
 }
 const outDir = outDirArg
   ? path.resolve(process.cwd(), outDirArg)
-  : path.resolve(__dirname, "../pdf");
-const concurrency = Math.max(1, Math.min(8, concurrencyArg ?? 2));
+  : path.resolve(__dirname, "..", pdfConfig.outDir);
+const concurrency = Math.max(
+  pdfConfig.concurrency.min,
+  Math.min(pdfConfig.concurrency.max, concurrencyArg ?? pdfConfig.concurrency.default),
+);
 const debugPdfFonts = process.env.DEBUG_PDF_FONTS === "1";
 const useGoogleFont = process.env.PDF_USE_GOOGLE_FONT === "1";
+const fontFamily =
+  '"Noto Sans SC","Noto Sans CJK SC","Source Han Sans SC","Microsoft YaHei","PingFang SC",sans-serif';
+const footerFontFamily =
+  '"Noto Sans CJK SC","Noto Sans SC","Source Han Sans SC","Microsoft YaHei","PingFang SC",sans-serif';
 const googleFontUrl =
   "https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap";
+const fontPreloadList = ['400 16px "Noto Sans SC"', '700 16px "Noto Sans SC"'];
 
 fs.mkdirSync(outDir, { recursive: true });
 
@@ -95,22 +107,13 @@ if (listPath) {
   files = raw
     .split("\n")
     .map((line) => line.trim())
-    .filter(
-      (line) =>
-        line &&
-        line !== "404.html" &&
-        line !== "s.html" &&
-        line !== "README.html" &&
-        !line.endsWith("/index.html") &&
-        line !== "index.html" &&
-        !line.startsWith("hidePage/"),
-    );
+    .filter((line) => line && shouldExportPdfPage(line, projectConfig));
   files = Array.from(new Set(files));
   files = files.filter((file) => fs.existsSync(path.join(distDir, file)));
 } else {
-  files = await fg("**/*.html", {
+  files = await fg(projectConfig.export.pdf.include, {
     cwd: distDir,
-    ignore: ["404.html", "**/index.html", "s.html", "README.html", "hidePage/**"],
+    ignore: projectConfig.export.pdf.exclude,
   });
 }
 
@@ -127,7 +130,7 @@ const browser = await chromium.launch();
 const pagePool = [];
 const pdfBaseStyle = `
     :root {
-        --vp-font-family-base: "Noto Sans SC","Noto Sans CJK SC","Source Han Sans SC","Microsoft YaHei","PingFang SC",sans-serif;
+        --vp-font-family-base: ${fontFamily};
     }
 
     html,
@@ -144,6 +147,51 @@ const pdfBaseStyle = `
     b {
         font-family: var(--vp-font-family-base) !important;
         font-weight: 700 !important;
+    }
+
+    @media print {
+        .vp-doc .table-wrapper,
+        .vp-doc div:has(> table) {
+            width: 100% !important;
+            max-width: 100% !important;
+            overflow: visible !important;
+        }
+
+        .vp-doc table {
+            width: 100% !important;
+            max-width: 100% !important;
+            table-layout: fixed !important;
+            font-size: 8px !important;
+            line-height: 1.2 !important;
+        }
+
+        .vp-doc th,
+        .vp-doc td {
+            min-width: 0 !important;
+            padding: 3px 4px !important;
+            white-space: normal !important;
+            overflow: hidden !important;
+            overflow-wrap: anywhere !important;
+            vertical-align: middle !important;
+        }
+
+        .vp-doc table:has(tr > :nth-child(5)) th:first-child,
+        .vp-doc table:has(tr > :nth-child(5)) td:first-child {
+            width: 12% !important;
+        }
+
+        .vp-doc th mjx-container,
+        .vp-doc td mjx-container {
+            max-width: 100% !important;
+            overflow: hidden !important;
+        }
+
+        .vp-doc th mjx-container > svg,
+        .vp-doc td mjx-container > svg {
+            width: auto !important;
+            max-width: 100% !important;
+            height: auto !important;
+        }
     }
 `;
 for (let i = 0; i < concurrency; i += 1) {
@@ -197,14 +245,11 @@ const worker = async (page) => {
         googleFontHref: googleFontUrl,
       },
     );
-    await page.evaluate(async () => {
+    await page.evaluate(async (fontPreloadList) => {
       if (!document.fonts) return;
-      await Promise.allSettled([
-        document.fonts.load('400 16px "Noto Sans SC"'),
-        document.fonts.load('700 16px "Noto Sans SC"'),
-      ]);
+      await Promise.allSettled(fontPreloadList.map((font) => document.fonts.load(font)));
       await document.fonts.ready;
-    });
+    }, fontPreloadList);
     if (debugPdfFonts) {
       const fontDebug = await page.evaluate(() => {
         const sample = document.createElement("strong");
@@ -232,14 +277,9 @@ const worker = async (page) => {
 
     await page.pdf({
       path: outputPath,
-      format: "A4",
+      format: pdfConfig.page.format,
       printBackground: true,
-      margin: {
-        top: "10mm",
-        bottom: "10mm",
-        left: "10mm",
-        right: "10mm",
-      },
+      margin: pdfConfig.page.margin,
       displayHeaderFooter: true,
       headerTemplate: "<div></div>",
       footerTemplate: `
@@ -251,7 +291,7 @@ const worker = async (page) => {
                         display: flex;
                         justify-content: flex-end;
                         font-size: 10pt;
-                        font-family: "Noto Sans CJK SC","Noto Sans SC","Source Han Sans SC","Microsoft YaHei","PingFang SC",sans-serif;
+                        font-family: ${footerFontFamily};
                     }
                 </style>
                 <div class="pdf-footer">
