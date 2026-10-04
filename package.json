@@ -7,6 +7,7 @@
   },
   "devDependencies": {
     "@types/blueimp-md5": "^2.18.2",
+    "@types/markdown-it": "^14.2.0",
     "@types/node": "^24.0.0",
     "fast-glob": "^3.3.3",
     "markdown-it-mathjax3": "^4.3.2",
@@ -14,11 +15,11 @@
     "playwright": "^1.60.0",
     "schema-dts": "^1.1.5",
     "typescript": "6.0.3",
-    "vitepress": "2.0.0-alpha.18",
-    "yaml": "^2.9.0",
     "vite-plus": "catalog:",
+    "vitepress": "2.0.0-alpha.18",
+    "vue": "^3.5.0",
     "vue-tsc": "^3.3.0",
-    "vue": "^3.5.0"
+    "yaml": "^2.9.0"
   },
   "scripts": {
     "docs:dev": "vitepress dev",
