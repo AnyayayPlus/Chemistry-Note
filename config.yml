@@ -12,8 +12,10 @@ export:
       - "public/**"
       - "data/**"
       - "package.json"
-      - "package-lock.json"
-      - "bun.lock"
+      - "pnpm-workspace.yaml"
+      - ".node-version"
+      - "vite.config.ts"
+      - "pnpm-lock.yaml"
       - "config.yml"
     # 源文件后缀：这些源文件会被映射成对应的 HTML 页面参与增量导出
     sourceExtensions:

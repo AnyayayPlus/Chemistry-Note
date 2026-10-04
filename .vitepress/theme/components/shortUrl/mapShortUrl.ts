@@ -7,7 +7,7 @@ import fg from "fast-glob";
 import fs from "node:fs";
 import path from "node:path";
 
-import { pageAliases } from "../../../siteData/pageAliases";
+import { pageAliases } from "../../../siteData/pageAliases.ts";
 
 type ShortUrlMap = {
   [key: string]: string;

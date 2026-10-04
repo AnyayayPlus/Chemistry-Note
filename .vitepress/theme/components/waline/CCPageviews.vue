@@ -1,13 +1,13 @@
-<script setup>
+<script setup lang="ts">
 import { pageviewCount } from "@waline/client";
 import { onBeforeUnmount, onMounted, watch } from "vue";
 
 import { useWalineBase } from "./useWalineBase";
 
 const { serverURL, route } = useWalineBase();
-let abortPageview = null;
+let abortPageview: ReturnType<typeof pageviewCount> | null = null;
 
-const runPageview = (path) => {
+const runPageview = (path: string) => {
   if (abortPageview) abortPageview();
   abortPageview = pageviewCount({ serverURL, path });
 };
@@ -18,7 +18,7 @@ onMounted(() => {
 
 watch(
   () => route.path,
-  (path) => {
+  (path: string) => {
     if (typeof window === "undefined") return;
     runPageview(path);
   },

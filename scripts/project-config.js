@@ -31,8 +31,10 @@ const defaultConfig = {
         "public/**",
         "data/**",
         "package.json",
-        "package-lock.json",
-        "bun.lock",
+        "pnpm-workspace.yaml",
+        ".node-version",
+        "vite.config.ts",
+        "pnpm-lock.yaml",
         "config.yml",
       ],
       sourceExtensions: [".md"],
@@ -42,10 +44,13 @@ const defaultConfig = {
 
 const configFileName = "config.yml";
 
+/** @param {string} filePath */
 const normalizePath = (filePath) => filePath.replace(/\\/g, "/").replace(/^\.\/+/, "");
 
+/** @param {string} value */
 const escapeRegExp = (value) => value.replace(/[|\\{}()[\]^$+?.]/g, "\\$&");
 
+/** @param {string} pattern */
 const globToRegExp = (pattern) => {
   const normalized = normalizePath(pattern);
   let source = "";
@@ -81,8 +86,10 @@ const globToRegExp = (pattern) => {
   return new RegExp(`^${source}$`);
 };
 
+/** @param {string} filePath @param {string} pattern */
 const matchesPattern = (filePath, pattern) => globToRegExp(pattern).test(normalizePath(filePath));
 
+/** @param {unknown} value @param {string[]} fallback */
 const asStringArray = (value, fallback) => {
   if (!Array.isArray(value)) {
     return fallback;
@@ -91,13 +98,16 @@ const asStringArray = (value, fallback) => {
   return items.length > 0 ? items : fallback;
 };
 
+/** @param {unknown} value @param {string} fallback */
 const asString = (value, fallback) => (typeof value === "string" && value ? value : fallback);
 
+/** @param {unknown} value @param {number} fallback */
 const asPositiveInteger = (value, fallback) => {
   const number = Number(value);
   return Number.isInteger(number) && number > 0 ? number : fallback;
 };
 
+/** @param {typeof defaultConfig} rawConfig */
 const buildConcurrencyConfig = (rawConfig) => {
   const minConcurrency = asPositiveInteger(
     rawConfig.export?.pdf?.concurrency?.min,
@@ -180,9 +190,11 @@ export const loadProjectConfig = (cwd = process.cwd()) => {
   };
 };
 
+/** @param {string} filePath @param {string[]} patterns */
 export const matchesAnyPattern = (filePath, patterns) =>
   patterns.some((pattern) => matchesPattern(filePath, pattern));
 
+/** @param {string} filePath @param {typeof defaultConfig} config */
 export const shouldExportPdfPage = (filePath, config) => {
   const normalized = normalizePath(filePath);
   return (
@@ -191,6 +203,7 @@ export const shouldExportPdfPage = (filePath, config) => {
   );
 };
 
+/** @param {string} filePath @param {typeof defaultConfig} config */
 export const isTrackedSourcePage = (filePath, config) => {
   const normalized = normalizePath(filePath);
   return config.export.changedPages.sourceExtensions.some((extension) =>

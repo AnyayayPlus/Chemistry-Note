@@ -16,3 +16,6 @@ data/generated/
 pdf-repo-single/
 pdf-repo/
 scripts/pdf-repo-test.txt
+
+.vite-hooks/_/
+.vite/

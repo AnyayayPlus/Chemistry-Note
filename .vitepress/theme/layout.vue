@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import mediumZoom from "medium-zoom";
 import { useRoute } from "vitepress";
 import DefaultTheme from "vitepress/theme";
@@ -13,10 +13,10 @@ import { bootstrapSiteSettings } from "./composables/useSiteSettings";
 const { Layout } = DefaultTheme;
 const route = useRoute();
 const contentImageSelector = ".vp-doc img:not([data-no-zoom])";
-let imageZoom;
+let imageZoom: ReturnType<typeof mediumZoom> | undefined;
 
-const normalizePath = (p) => p.replace(/\/$/, "");
-const runOnClientFrame = (cb) => {
+const normalizePath = (p: string) => p.replace(/\/$/, "");
+const runOnClientFrame = (cb: FrameRequestCallback) => {
   if (typeof window === "undefined") return;
   window.requestAnimationFrame(cb);
 };
@@ -55,7 +55,7 @@ const refreshPageEnhancements = () => {
   setupImageZoom();
 };
 
-const onSectionTitleClick = (event) => {
+const onSectionTitleClick = (event: MouseEvent) => {
   const target = event.target;
   if (!(target instanceof Element)) return;
 

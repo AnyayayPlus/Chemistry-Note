@@ -7,31 +7,35 @@
   },
   "devDependencies": {
     "@types/blueimp-md5": "^2.18.2",
-    "@types/node": "^25.9.1",
+    "@types/markdown-it": "^14.2.0",
+    "@types/node": "^24.0.0",
     "fast-glob": "^3.3.3",
-    "husky": "^9.1.7",
-    "lint-staged": "^17.0.6",
     "markdown-it-mathjax3": "^4.3.2",
     "medium-zoom": "^1.1.0",
-    "oxfmt": "^0.50.0",
     "playwright": "^1.60.0",
     "schema-dts": "^1.1.5",
     "typescript": "6.0.3",
+    "vite-plus": "catalog:",
     "vitepress": "2.0.0-alpha.18",
+    "vue": "^3.5.0",
+    "vue-tsc": "^3.3.0",
     "yaml": "^2.9.0"
   },
   "scripts": {
     "docs:dev": "vitepress dev",
     "docs:build": "vitepress build",
     "docs:preview": "vitepress preview",
-    "format": "oxfmt --write .",
-    "format:check": "oxfmt --check .",
-    "typecheck": "tsc --noEmit",
-    "prepare": "husky",
-    "pdf:single": "bun scripts/export-pdf.js --list scripts/pdf-repo-test.txt --out-dir pdf-repo-single --concurrency 1",
-    "pdf:all": "bun scripts/export-pdf.js --concurrency 4"
+    "format": "vp fmt --write .",
+    "format:check": "vp fmt --check .",
+    "typecheck": "vue-tsc --noEmit",
+    "prepare": "vp config --no-agent",
+    "pdf:single": "node scripts/export-pdf.js --list scripts/pdf-repo-test.txt --out-dir pdf-repo-single --concurrency 1",
+    "pdf:all": "node scripts/export-pdf.js --concurrency 4",
+    "check": "vp check && vp run typecheck"
   },
-  "lint-staged": {
-    "*": "oxfmt --no-error-on-unmatched-pattern"
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=24.11.0 <25"
   }
 }
