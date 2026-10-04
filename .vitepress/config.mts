@@ -7,6 +7,8 @@ import type { SiteThemeConfig } from "./shared/theme.ts";
 import { loadProjectConfig } from "../scripts/project-config.js";
 import { configureImageOptimization } from "./markdown/imageOptimization.ts";
 import { GITHUB_URL } from "./shared/site.ts";
+import { CONTENT_EXCLUDES, scanContent } from "./siteData/content.ts";
+import { contentPlugin } from "./siteData/contentPlugin.ts";
 import { buildNavItems } from "./siteData/nav.ts";
 import { buildSidebarItems } from "./siteData/sidebar.ts";
 import { buildTransformHead } from "./siteData/transformHead.ts";
@@ -19,10 +21,15 @@ const siteName = "Anyayay's Chemistry Note";
 const defaultDescription =
   "免费高中化学笔记，覆盖原子结构、有机化学、元素化合物、化学实验等核心板块，适合课堂学习与高考复习。";
 const { include, exclude } = loadProjectConfig(contentRoot).export.pdf;
-const navItems = buildNavItems(contentRoot);
-const sidebarItems = buildSidebarItems(contentRoot);
+const catalog = scanContent(contentRoot);
+const navItems = buildNavItems(catalog);
+const sidebarItems = buildSidebarItems(catalog);
 
 export default defineConfig<SiteThemeConfig>({
+  srcExclude: CONTENT_EXCLUDES,
+  vite: {
+    plugins: [contentPlugin(contentRoot, () => catalog)],
+  },
   title: siteName,
   description: defaultDescription,
   lang: "zh-CN",
@@ -124,6 +131,6 @@ export default defineConfig<SiteThemeConfig>({
 
   // 生成哈希 - 路径对应表
   buildEnd: (siteConfig) => {
-    return mapShortUrl(siteConfig);
+    return mapShortUrl(siteConfig, catalog);
   },
 });

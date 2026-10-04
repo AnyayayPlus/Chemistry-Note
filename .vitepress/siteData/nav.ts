@@ -1,14 +1,12 @@
 import type { DefaultTheme } from "vitepress";
 
-import { sourceToRoutePath } from "../shared/page.ts";
-import { getSections } from "./sidebar";
+import type { ContentCatalog } from "./content.ts";
 
-export const buildNavItems = (rootDir: string): DefaultTheme.NavItem[] => {
-  const sections = getSections(rootDir);
-
-  const items: DefaultTheme.NavItemWithLink[] = sections.map((sectionName) => {
-    return { text: sectionName, link: sourceToRoutePath(`${sectionName}/index.md`) };
-  });
+export const buildNavItems = (catalog: ContentCatalog): DefaultTheme.NavItem[] => {
+  const items: DefaultTheme.NavItemWithLink[] = catalog.sections.map((section) => ({
+    text: section.name,
+    link: section.routePath,
+  }));
 
   return [
     { text: "首页", link: "/" },

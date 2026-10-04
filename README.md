@@ -124,3 +124,5 @@ vp run docs:dev
 外部构建平台（如 Cloudflare Pages）应设置 Node 24.21.0，安装命令为 `pnpm install --frozen-lockfile`，构建命令为 `pnpm run docs:build`，输出目录为 `.vitepress/dist`。
 
 页面路径与分类规则集中在 `.vitepress/shared/page.ts`，供主题、SEO、短链接及 PDF 脚本共同使用。`config.yml` 的 `export.pdf.include` / `exclude` 同时决定导出范围和“下载本页”按钮是否显示。`vp run test:pages` 可检查路径兼容性、旧短链接和 PDF 资格规则，已包含在 `vp run check` 中。
+
+内容清单由 `.vitepress/siteData/content.ts` 统一扫描生成，导航、侧边栏及短链接从同一清单派生。开发模式下新增、删除或重命名 Markdown 文件会自动重载开发配置、刷新目录，`/shortmap.json` 也会同步更新；普通正文编辑继续使用 VitePress 的热更新。新增章节请保留 `NN 章节名/index.md` 的目录约定。

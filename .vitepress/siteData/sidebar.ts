@@ -1,60 +1,11 @@
 import type { DefaultTheme } from "vitepress";
 
-import fs from "node:fs";
-import path from "node:path";
+import type { ContentCatalog } from "./content.ts";
 
-import { sourceToRoutePath } from "../shared/page.ts";
-
-const sectionDirPattern = /^\d{2}\s/;
-const ignoredRootDirs = new Set([
-  ".vitepress",
-  "node_modules",
-  "public",
-  "data",
-  "hidePage",
-  "PDF文件",
-]);
-
-export const getSections = (rootDir: string): string[] =>
-  fs
-    .readdirSync(rootDir, { withFileTypes: true })
-    .filter(
-      (dirent) =>
-        dirent.isDirectory() &&
-        sectionDirPattern.test(dirent.name) &&
-        !ignoredRootDirs.has(dirent.name),
-    )
-    .map((dirent) => dirent.name)
-    .sort((a, b) => a.localeCompare(b, "zh-CN"));
-
-export const getSectionFiles = (sectionPath: string): string[] =>
-  fs
-    .readdirSync(sectionPath, { withFileTypes: true })
-    .filter((dirent) => dirent.isFile() && dirent.name.endsWith(".md"))
-    .map((dirent) => dirent.name)
-    .sort((a, b) => a.localeCompare(b, "zh-CN"));
-
-// Build sidebar from numbered top-level folders and their markdown files.
-export const buildSidebarItems = (rootDir: string): DefaultTheme.SidebarItem[] => {
-  const sections = getSections(rootDir);
-
-  return sections.map((sectionName) => {
-    const sectionPath = path.join(rootDir, sectionName);
-    const files = getSectionFiles(sectionPath).filter((name) => name.toLowerCase() !== "index.md");
-
-    const items: DefaultTheme.SidebarItem[] = files.map((filename) => {
-      const name = filename.slice(0, -3);
-      return {
-        text: name,
-        link: sourceToRoutePath(`${sectionName}/${filename}`),
-      };
-    });
-
-    return {
-      text: sectionName,
-      link: sourceToRoutePath(`${sectionName}/index.md`),
-      items,
-      collapsed: true,
-    };
-  });
-};
+export const buildSidebarItems = (catalog: ContentCatalog): DefaultTheme.SidebarItem[] =>
+  catalog.sections.map((section) => ({
+    text: section.name,
+    link: section.routePath,
+    items: section.pages.map((page) => ({ text: page.title, link: page.routePath })),
+    collapsed: true,
+  }));

@@ -17,8 +17,11 @@ import {
   sourceToRoutePath,
   sourceToShortLinkPath,
 } from "../.vitepress/shared/page.ts";
+import { scanContent } from "../.vitepress/siteData/content.ts";
+import { buildNavItems } from "../.vitepress/siteData/nav.ts";
 import { pageAliases } from "../.vitepress/siteData/pageAliases.ts";
-import { generateShortMapFromRoot } from "../.vitepress/theme/components/shortUrl/mapShortUrl.ts";
+import { buildSidebarItems } from "../.vitepress/siteData/sidebar.ts";
+import { buildShortUrlMap } from "../.vitepress/theme/components/shortUrl/mapShortUrl.ts";
 import { loadProjectConfig, shouldExportPdfPage } from "./project-config.js";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
@@ -71,34 +74,76 @@ await test("PDF links follow the actual configured export scope", () => {
 });
 
 await test("all existing source pages retain their short-link keys and old aliases", () => {
-  const temp = fs.mkdtempSync(path.join(os.tmpdir(), "chemistry-shortlinks-"));
+  const shortMap = buildShortUrlMap(scanContent(root));
+  const pages = fg.sync("**/*.md", {
+    cwd: root,
+    ignore: [".vitepress/**", "node_modules/**", "public/**", "data/**", "export/**", "PDF文件/**"],
+  });
+  for (const source of pages) {
+    const legacy = source
+      .replace(/\\/g, "/")
+      .replace(/^\//, "")
+      .replace(/(index)?\.md$/, "");
+    assert.equal(sourceToShortLinkPath(source), legacy, source);
+    assert.equal(shortMap[md5(legacy).slice(0, 10)], legacy, source);
+  }
+  for (const [oldSource, newSource] of Object.entries(pageAliases)) {
+    const key = md5(sourceToShortLinkPath(oldSource)).slice(0, 10);
+    assert.equal(shortMap[key], sourceToShortLinkPath(newSource));
+  }
+});
+
+await test("catalog consumers refresh together after adding, renaming and deleting content", () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), "chemistry-content-"));
+  const write = (source: string) => {
+    const file = path.join(temp, source);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, "# Test\n");
+  };
   try {
-    const output = path.join(temp, "shortmap.json");
-    generateShortMapFromRoot(root, output);
-    const shortMap = JSON.parse(fs.readFileSync(output, "utf8"));
-    const pages = fg.sync("**/*.md", {
-      cwd: root,
-      ignore: [
-        ".vitepress/**",
-        "node_modules/**",
-        "public/**",
-        "data/**",
-        "export/**",
-        "PDF文件/**",
-      ],
-    });
-    for (const source of pages) {
-      const legacy = source
-        .replace(/\\/g, "/")
-        .replace(/^\//, "")
-        .replace(/(index)?\.md$/, "");
-      assert.equal(sourceToShortLinkPath(source), legacy, source);
-      assert.equal(shortMap[md5(legacy).slice(0, 10)], legacy, source);
-    }
-    for (const [oldSource, newSource] of Object.entries(pageAliases)) {
-      const key = md5(sourceToShortLinkPath(oldSource)).slice(0, 10);
-      assert.equal(shortMap[key], sourceToShortLinkPath(newSource));
-    }
+    for (const source of [
+      "index.md",
+      "02 第二章/index.md",
+      "01 第一章/index.md",
+      "01 第一章/02 第二节.md",
+      "01 第一章/01 第一节.md",
+      "01 第一章/子目录/补充.md",
+      "hidePage/shortUrl.md",
+      "data/generated.md",
+      "public/example.md",
+      "pdf-repo/README.md",
+    ])
+      write(source);
+    const initial = scanContent(temp);
+    assert.deepEqual(
+      initial.sections.map((section) => section.name),
+      ["01 第一章", "02 第二章"],
+    );
+    assert.deepEqual(
+      initial.sections[0].pages.map((page) => page.title),
+      ["01 第一节", "02 第二节"],
+    );
+    assert.ok(initial.pages.some((page) => page.sourcePath === "hidePage/shortUrl.md"));
+    assert.ok(initial.pages.some((page) => page.sourcePath === "01 第一章/子目录/补充.md"));
+    assert.ok(!initial.pages.some((page) => /^(data|public|pdf-repo)\//.test(page.sourcePath)));
+    const added = "03 第三章/01 新文章.md";
+    write("03 第三章/index.md");
+    write(added);
+    const refreshed = scanContent(temp);
+    assert.equal(refreshed.sections.length, 3);
+    assert.ok(JSON.stringify(buildNavItems(refreshed)).includes("03 第三章"));
+    assert.ok(JSON.stringify(buildSidebarItems(refreshed)).includes("01 新文章"));
+    const key = md5(sourceToShortLinkPath(added)).slice(0, 10);
+    assert.equal(buildShortUrlMap(refreshed)[key], sourceToShortLinkPath(added));
+    fs.renameSync(path.join(temp, added), path.join(temp, "03 第三章/02 改名.md"));
+    const renamed = scanContent(temp);
+    assert.ok(!JSON.stringify(buildSidebarItems(renamed)).includes("01 新文章"));
+    assert.ok(JSON.stringify(buildSidebarItems(renamed)).includes("02 改名"));
+    assert.equal(buildShortUrlMap(renamed)[key], undefined);
+    fs.rmSync(path.join(temp, "03 第三章"), { recursive: true });
+    const deleted = scanContent(temp);
+    assert.equal(deleted.sections.length, 2);
+    assert.ok(!JSON.stringify(buildNavItems(deleted)).includes("03 第三章"));
   } finally {
     fs.rmSync(temp, { recursive: true, force: true });
   }
