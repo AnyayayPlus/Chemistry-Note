@@ -2,22 +2,25 @@
 import { useData } from "vitepress";
 import { computed } from "vue";
 
+import type { SiteThemeConfig } from "../../shared/theme.ts";
+
+import { htmlToPdfPath, isPdfExportable, sourceToHtmlPath } from "../../shared/page.ts";
+import { PDF_BASE_URL } from "../../shared/site.ts";
 import { trackUmamiEvent } from "../utils/umami";
 
-const { page } = useData();
-
-const PDF_BASE_URL = "https://cnb.cool/Seeridia/Chemistry-Note-File/-/git/raw/main/";
+const { page, theme } = useData<SiteThemeConfig>();
 
 const pdfUrl = computed(() => {
-  const filePath = page.value.filePath ?? "";
-  if (!filePath.endsWith(".md")) return "";
-  const pdfPath = filePath.replace(/\.md$/i, ".pdf");
+  const htmlPath = sourceToHtmlPath(page.value.relativePath || "");
+  const rules = theme.value.pdfExport;
+  if (!rules || !isPdfExportable(htmlPath, rules)) return "";
+  const pdfPath = htmlToPdfPath(htmlPath);
   return `${PDF_BASE_URL}${encodeURI(pdfPath)}?download=true`;
 });
 
-// 只有在文档页面才显示下载 PDF 按钮
-const isDocPage = computed(() => (page.value.frontmatter?.layout ?? "doc") === "doc");
-const shouldShow = computed(() => isDocPage.value && pdfUrl.value);
+const shouldShow = computed(
+  () => (page.value.frontmatter?.layout ?? "doc") === "doc" && Boolean(pdfUrl.value),
+);
 
 const trackPdfDownload = (kind: "page" | "all") => {
   trackUmamiEvent(kind === "page" ? "pdf_download_page" : "pdf_download_all", {

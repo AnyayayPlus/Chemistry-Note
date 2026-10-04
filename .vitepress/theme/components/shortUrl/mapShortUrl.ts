@@ -7,27 +7,26 @@ import fg from "fast-glob";
 import fs from "node:fs";
 import path from "node:path";
 
+import {
+  sourceToHtmlPath,
+  sourceToPublicPath,
+  sourceToShortLinkPath,
+} from "../../../shared/page.ts";
 import { pageAliases } from "../../../siteData/pageAliases.ts";
 
 type ShortUrlMap = {
   [key: string]: string;
 };
 
-const normalizePagePath = (pagePath: string): string =>
-  pagePath
-    .replace(/\\/g, "/")
-    .replace(/^\//, "")
-    .replace(/(index)?\.md$/, "");
-
 const buildShortUrlMap = (pages: string[]): ShortUrlMap => {
   const shortMap: ShortUrlMap = {};
   for (const page of pages) {
-    const normalizedPath = normalizePagePath(page);
+    const normalizedPath = sourceToShortLinkPath(page);
     shortMap[md5(normalizedPath).slice(0, 10)] = normalizedPath;
   }
   for (const [oldPage, newPage] of Object.entries(pageAliases)) {
     if (!pages.includes(newPage)) continue;
-    shortMap[md5(normalizePagePath(oldPage)).slice(0, 10)] = normalizePagePath(newPage);
+    shortMap[md5(sourceToShortLinkPath(oldPage)).slice(0, 10)] = sourceToShortLinkPath(newPage);
   }
   return shortMap;
 };
@@ -55,8 +54,8 @@ export default async function mapShortUrl(siteConfig: SiteConfig) {
       if (!siteConfig.pages.includes(newPage)) {
         throw new Error(`Missing redirect target: ${newPage}`);
       }
-      const oldHtml = oldPage.replace(/\.md$/, ".html");
-      const newUrl = `/${encodeURI(newPage.replace(/\.md$/, ".html"))}`;
+      const oldHtml = sourceToHtmlPath(oldPage);
+      const newUrl = sourceToPublicPath(newPage);
       const targetFile = path.join(siteConfig.outDir, oldHtml);
       fs.mkdirSync(path.dirname(targetFile), { recursive: true });
       fs.writeFileSync(

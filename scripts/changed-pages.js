@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import url from "url";
 
+import { sourceToHtmlPath } from "../.vitepress/shared/page.ts";
 import {
   isTrackedSourcePage,
   loadProjectConfig,
@@ -52,14 +53,7 @@ const mdToHtml = (filePath) => {
   if (!isTrackedSourcePage(normalized, projectConfig)) {
     return null;
   }
-  const dir = path.posix.dirname(normalized);
-  const baseName = path.posix.basename(normalized);
-  const lower = baseName.toLowerCase();
-  const targetName =
-    lower === "readme.md" || lower === "index.md"
-      ? "index.html"
-      : baseName.replace(/\.md$/i, ".html");
-  return dir === "." ? targetName : `${dir}/${targetName}`;
+  return sourceToHtmlPath(normalized);
 };
 
 const outputs = {

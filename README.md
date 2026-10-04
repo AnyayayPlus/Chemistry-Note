@@ -122,3 +122,5 @@ vp run docs:dev
 提交前通过 `vp staged` 自动格式化暂存文件。PR 检查会执行检查和站点构建；生产部署复用同一检查流程的构建产物。VitePress 仍负责站点构建，因此请使用 `vp run docs:build`。
 
 外部构建平台（如 Cloudflare Pages）应设置 Node 24.21.0，安装命令为 `pnpm install --frozen-lockfile`，构建命令为 `pnpm run docs:build`，输出目录为 `.vitepress/dist`。
+
+页面路径与分类规则集中在 `.vitepress/shared/page.ts`，供主题、SEO、短链接及 PDF 脚本共同使用。`config.yml` 的 `export.pdf.include` / `exclude` 同时决定导出范围和“下载本页”按钮是否显示。`vp run test:pages` 可检查路径兼容性、旧短链接和 PDF 资格规则，已包含在 `vp run check` 中。

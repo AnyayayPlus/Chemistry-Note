@@ -3,6 +3,8 @@ import type { DefaultTheme } from "vitepress";
 import fs from "node:fs";
 import path from "node:path";
 
+import { sourceToRoutePath } from "../shared/page.ts";
+
 const sectionDirPattern = /^\d{2}\s/;
 const ignoredRootDirs = new Set([
   ".vitepress",
@@ -12,8 +14,6 @@ const ignoredRootDirs = new Set([
   "hidePage",
   "PDF文件",
 ]);
-
-export const encodeLink = (link: string): string => encodeURI(link);
 
 export const getSections = (rootDir: string): string[] =>
   fs
@@ -46,13 +46,13 @@ export const buildSidebarItems = (rootDir: string): DefaultTheme.SidebarItem[] =
       const name = filename.slice(0, -3);
       return {
         text: name,
-        link: encodeLink(`/${sectionName}/${name}`),
+        link: sourceToRoutePath(`${sectionName}/${filename}`),
       };
     });
 
     return {
       text: sectionName,
-      link: encodeLink(`/${sectionName}/index`),
+      link: sourceToRoutePath(`${sectionName}/index.md`),
       items,
       collapsed: true,
     };

@@ -31,7 +31,8 @@
     "prepare": "vp config --no-agent",
     "pdf:single": "node scripts/export-pdf.js --list scripts/pdf-repo-test.txt --out-dir pdf-repo-single --concurrency 1",
     "pdf:all": "node scripts/export-pdf.js --concurrency 4",
-    "check": "vp check && vp run typecheck"
+    "check": "vp check && vp run typecheck && vp run test:pages",
+    "test:pages": "node --test scripts/page-rules.test.ts"
   },
   "type": "module",
   "packageManager": "pnpm@10.33.0",

@@ -2,7 +2,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitepress";
 
+import type { SiteThemeConfig } from "./shared/theme.ts";
+
+import { loadProjectConfig } from "../scripts/project-config.js";
 import { configureImageOptimization } from "./markdown/imageOptimization.ts";
+import { GITHUB_URL } from "./shared/site.ts";
 import { buildNavItems } from "./siteData/nav.ts";
 import { buildSidebarItems } from "./siteData/sidebar.ts";
 import { buildTransformHead } from "./siteData/transformHead.ts";
@@ -14,10 +18,11 @@ const siteUrl = "https://chemistry-note.seeridia.top";
 const siteName = "Anyayay's Chemistry Note";
 const defaultDescription =
   "免费高中化学笔记，覆盖原子结构、有机化学、元素化合物、化学实验等核心板块，适合课堂学习与高考复习。";
+const { include, exclude } = loadProjectConfig(contentRoot).export.pdf;
 const navItems = buildNavItems(contentRoot);
 const sidebarItems = buildSidebarItems(contentRoot);
 
-export default defineConfig({
+export default defineConfig<SiteThemeConfig>({
   title: siteName,
   description: defaultDescription,
   lang: "zh-CN",
@@ -78,11 +83,12 @@ export default defineConfig({
     ],
   ],
   themeConfig: {
+    pdfExport: { include, exclude },
     logo: "/images/icon.svg",
     siteTitle: "Chemistry Note",
     nav: navItems,
     sidebar: { "/": sidebarItems },
-    socialLinks: [{ icon: "github", link: "https://github.com/Seeridia/Chemistry-Note" }],
+    socialLinks: [{ icon: "github", link: GITHUB_URL }],
     search: {
       provider: "algolia",
       options: {
@@ -95,7 +101,7 @@ export default defineConfig({
       },
     },
     editLink: {
-      pattern: "https://github.com/Seeridia/Chemistry-Note/edit/master/:path",
+      pattern: `${GITHUB_URL}/edit/master/:path`,
       text: "在 GitHub 上查看此页",
     },
     footer: {

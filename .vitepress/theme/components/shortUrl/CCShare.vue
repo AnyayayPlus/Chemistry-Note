@@ -1,34 +1,10 @@
-<template>
-  <div class="share-panel">
-    <noscript>需要启用 JavaScript 才能使用分享功能。</noscript>
-    <QRCodeVue
-      :value="link"
-      :size="120"
-      render-as="svg"
-      level="L"
-      background="transparent"
-      :foreground="foreground"
-    />
-    <button class="copylink" @click="copyLink">
-      复制链接
-      <span class="copy-indicator-wrapper" :class="expand ? 'expanded' : 'folded'">
-        <svg class="copy-indicator" viewBox="0 0 24 24" width="18" height="18">
-          <path
-            fill="currentColor"
-            d="M9 18.25a.74.74 0 0 1-.53-.25l-5-5a.75.75 0 1 1 1.06-1L9 16.44L19.47 6a.75.75 0 0 1 1.06 1l-11 11a.74.74 0 0 1-.53.25"
-          />
-        </svg>
-      </span>
-    </button>
-  </div>
-</template>
-
 <script setup lang="ts">
 import md5 from "blueimp-md5";
 import QRCodeVue from "qrcode.vue";
 import { useData } from "vitepress";
 import { computed, onMounted, ref } from "vue";
 
+import { sourceToShortLinkPath } from "../../../shared/page.ts";
 import { trackUmamiEvent } from "../../utils/umami";
 
 const { page, isDark } = useData();
@@ -39,8 +15,7 @@ let timer: ReturnType<typeof setTimeout> | null = null;
 const foreground = computed(() => (isDark.value ? "#D3D3CC" : "#3C3C43"));
 
 const link = computed(() => {
-  const filePath = page.value.filePath ?? "";
-  const normalizedPath = filePath.replace(/(index)?\.md$/, "");
+  const normalizedPath = sourceToShortLinkPath(page.value.relativePath || "");
   const encodedPath = encodeURI(normalizedPath);
   const baseUrl = origin.value;
 
@@ -72,6 +47,31 @@ onMounted(() => {
   origin.value = window.location.origin;
 });
 </script>
+
+<template>
+  <div class="share-panel">
+    <noscript>需要启用 JavaScript 才能使用分享功能。</noscript>
+    <QRCodeVue
+      :value="link"
+      :size="120"
+      render-as="svg"
+      level="L"
+      background="transparent"
+      :foreground="foreground"
+    />
+    <button class="copylink" @click="copyLink">
+      复制链接
+      <span class="copy-indicator-wrapper" :class="expand ? 'expanded' : 'folded'">
+        <svg class="copy-indicator" viewBox="0 0 24 24" width="18" height="18">
+          <path
+            fill="currentColor"
+            d="M9 18.25a.74.74 0 0 1-.53-.25l-5-5a.75.75 0 1 1 1.06-1L9 16.44L19.47 6a.75.75 0 0 1 1.06 1l-11 11a.74.74 0 0 1-.53.25"
+          />
+        </svg>
+      </span>
+    </button>
+  </div>
+</template>
 
 <style>
 .share-panel > svg {

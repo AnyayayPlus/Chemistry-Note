@@ -2,6 +2,14 @@ import fs from "fs";
 import path from "path";
 import YAML from "yaml";
 
+import {
+  isPdfExportable,
+  matchesAnyPattern,
+  normalizeSourcePath,
+} from "../.vitepress/shared/page.ts";
+
+export { matchesAnyPattern };
+
 const defaultConfig = {
   export: {
     pdf: {
@@ -43,51 +51,6 @@ const defaultConfig = {
 };
 
 const configFileName = "config.yml";
-
-/** @param {string} filePath */
-const normalizePath = (filePath) => filePath.replace(/\\/g, "/").replace(/^\.\/+/, "");
-
-/** @param {string} value */
-const escapeRegExp = (value) => value.replace(/[|\\{}()[\]^$+?.]/g, "\\$&");
-
-/** @param {string} pattern */
-const globToRegExp = (pattern) => {
-  const normalized = normalizePath(pattern);
-  let source = "";
-
-  for (let index = 0; index < normalized.length; index += 1) {
-    const char = normalized[index];
-    const nextChar = normalized[index + 1];
-
-    if (char === "*") {
-      if (nextChar === "*") {
-        const afterGlobstar = normalized[index + 2];
-        if (afterGlobstar === "/") {
-          source += "(?:.*\\/)?";
-          index += 2;
-        } else {
-          source += ".*";
-          index += 1;
-        }
-      } else {
-        source += "[^/]*";
-      }
-      continue;
-    }
-
-    if (char === "?") {
-      source += "[^/]";
-      continue;
-    }
-
-    source += escapeRegExp(char);
-  }
-
-  return new RegExp(`^${source}$`);
-};
-
-/** @param {string} filePath @param {string} pattern */
-const matchesPattern = (filePath, pattern) => globToRegExp(pattern).test(normalizePath(filePath));
 
 /** @param {unknown} value @param {string[]} fallback */
 const asStringArray = (value, fallback) => {
@@ -190,22 +153,13 @@ export const loadProjectConfig = (cwd = process.cwd()) => {
   };
 };
 
-/** @param {string} filePath @param {string[]} patterns */
-export const matchesAnyPattern = (filePath, patterns) =>
-  patterns.some((pattern) => matchesPattern(filePath, pattern));
-
 /** @param {string} filePath @param {typeof defaultConfig} config */
-export const shouldExportPdfPage = (filePath, config) => {
-  const normalized = normalizePath(filePath);
-  return (
-    matchesAnyPattern(normalized, config.export.pdf.include) &&
-    !matchesAnyPattern(normalized, config.export.pdf.exclude)
-  );
-};
+export const shouldExportPdfPage = (filePath, config) =>
+  isPdfExportable(filePath, config.export.pdf);
 
 /** @param {string} filePath @param {typeof defaultConfig} config */
 export const isTrackedSourcePage = (filePath, config) => {
-  const normalized = normalizePath(filePath);
+  const normalized = normalizeSourcePath(filePath);
   return config.export.changedPages.sourceExtensions.some((extension) =>
     normalized.toLowerCase().endsWith(extension.toLowerCase()),
   );

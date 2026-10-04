@@ -11,16 +11,9 @@ import type {
 } from "schema-dts";
 import type { HeadConfig, TransformContext } from "vitepress";
 
+import { getPageKind, sourceToPublicPath } from "../shared/page.ts";
+
 type JsonLd<T extends Thing> = WithContext<T>;
-
-function toPublicPath(relativePath: string): string {
-  if (relativePath === "index.md") return "/";
-  return `/${encodeURI(relativePath.replace(/\.md$/i, ".html"))}`;
-}
-
-function isChapterIndexPath(relativePath: string): boolean {
-  return /^\d{2}\s[^/]+\/index\.md$/i.test(relativePath);
-}
 
 function toBreadcrumbItemPath(pathParts: string[], index: number): string {
   if (index === 0) {
@@ -59,20 +52,21 @@ function toIsoDate(input: unknown): string | undefined {
 export function buildTransformHead(siteUrl: string, siteName: string, defaultDescription: string) {
   return function transformHead({ pageData }: TransformContext): HeadConfig[] {
     const relativePath = pageData.relativePath;
-    const canonicalUrl = `${siteUrl}${toPublicPath(relativePath)}`;
+    const canonicalUrl = `${siteUrl}${sourceToPublicPath(relativePath)}`;
     const websiteId = `${siteUrl}/#website`;
     const webPageId = `${canonicalUrl}#webpage`;
     const defaultImageUrl = `${siteUrl}/images/og-image.png`;
-    const pagePath = toPublicPath(relativePath);
+    const pagePath = sourceToPublicPath(relativePath);
     const pageDescription =
       normalizeDescription(pageData.description) ||
       normalizeDescription(pageData.frontmatter.description as string | undefined) ||
       defaultDescription;
     const pageTitle = pageData.title ? `${pageData.title} | ${siteName}` : siteName;
-    const isHomePage = relativePath === "index.md";
+    const pageKind = getPageKind(relativePath);
+    const isHomePage = pageKind === "home";
     const is404Page = relativePath === "404.md";
     const isHiddenUtilityPage = /^hidePage\//i.test(relativePath);
-    const isChapterIndex = isChapterIndexPath(relativePath);
+    const isChapterIndex = pageKind === "chapter";
     const publishedTime = toIsoDate((pageData.frontmatter as Record<string, unknown>)?.date);
     const modifiedTime =
       toIsoDate((pageData as { lastUpdated?: unknown }).lastUpdated) ||
@@ -185,7 +179,7 @@ export function buildTransformHead(siteUrl: string, siteName: string, defaultDes
       tags.push(["script", { type: "application/ld+json" }, JSON.stringify(collectionJsonLd)]);
     }
 
-    if (!isHomePage && !is404Page && !isHiddenUtilityPage && !isChapterIndex) {
+    if (pageKind === "article") {
       const isLearningResource =
         /^\d{2}\s/.test(relativePath) ||
         ["考点", "复习", "实验", "基础", "概念"].some((keyword) =>

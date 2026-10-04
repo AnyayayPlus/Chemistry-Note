@@ -7,6 +7,7 @@ import path from "path";
 import { chromium } from "playwright";
 import url from "url";
 
+import { htmlToPdfPath, normalizeSourcePath } from "../.vitepress/shared/page.ts";
 import { loadProjectConfig, shouldExportPdfPage } from "./project-config.js";
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
@@ -213,11 +214,11 @@ const worker = async (page) => {
     cursor += 1;
 
     const file = files[index];
-    const outputPath = path.join(outDir, file.replace(/\.html$/, ".pdf"));
+    const outputPath = path.join(outDir, htmlToPdfPath(file));
 
     fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 
-    const urlPath = encodeURI(file.replace(/\\/g, "/"));
+    const urlPath = encodeURI(normalizeSourcePath(file));
     const fileUrl = `http://127.0.0.1:${serverPort}/${urlPath}`;
 
     console.log("Exporting:", file);

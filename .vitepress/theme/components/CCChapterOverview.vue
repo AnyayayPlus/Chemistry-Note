@@ -4,6 +4,8 @@ import type { DefaultTheme } from "vitepress";
 import { useData, useRoute } from "vitepress";
 import { computed } from "vue";
 
+import { getSectionKey } from "../../shared/page.ts";
+
 type SidebarItem = DefaultTheme.SidebarItem;
 type ChapterLinkItem = {
   text: string;
@@ -12,19 +14,6 @@ type ChapterLinkItem = {
 
 const { theme } = useData();
 const route = useRoute();
-
-const normalizePath = (value: string): string => {
-  const decoded = decodeURI(value || "");
-  const noHash = decoded.split("#")[0];
-  const noQuery = noHash.split("?")[0];
-  const noHtml = noQuery.replace(/\.html$/, "");
-  return noHtml.endsWith("/") && noHtml !== "/" ? noHtml.slice(0, -1) : noHtml;
-};
-
-const getSectionKey = (value: string): string => {
-  const segments = normalizePath(value).split("/").filter(Boolean);
-  return segments[0] || "";
-};
 
 const currentSectionKey = computed(() => getSectionKey(route.path));
 

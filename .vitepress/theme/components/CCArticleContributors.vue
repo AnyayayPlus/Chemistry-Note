@@ -2,6 +2,9 @@
 import { useData } from "vitepress";
 import { computed, onMounted, ref, watch } from "vue";
 
+import { getPageKind } from "../../shared/page.ts";
+import { GITHUB_REPOSITORY } from "../../shared/site.ts";
+
 type GithubCommit = {
   author?: {
     login?: string;
@@ -27,14 +30,7 @@ const { page } = useData();
 const contributors = ref<Contributor[]>([]);
 
 const pagePath = computed(() => page.value.relativePath || "");
-const isArticlePage = computed(() => {
-  const relativePath = pagePath.value;
-  if (!relativePath) return false;
-  if (relativePath === "index.md" || relativePath === "README.md") return false;
-  if (relativePath.startsWith("hidePage/")) return false;
-  if (relativePath.endsWith("/index.md")) return false;
-  return relativePath.endsWith(".md");
-});
+const isArticlePage = computed(() => getPageKind(pagePath.value) === "article");
 
 async function loadContributors() {
   if (!isArticlePage.value) {
@@ -44,7 +40,7 @@ async function loadContributors() {
 
   try {
     const response = await fetch(
-      `https://api.github.com/repos/Seeridia/Chemistry-Note/commits?path=${encodeURIComponent(pagePath.value)}&per_page=100`,
+      `https://api.github.com/repos/${GITHUB_REPOSITORY}/commits?path=${encodeURIComponent(pagePath.value)}&per_page=100`,
       {
         headers: {
           Accept: "application/vnd.github+json",
