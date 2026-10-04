@@ -1,4 +1,4 @@
-// bun scripts/export-pdf.js --concurrency 4
+// node scripts/export-pdf.js --concurrency 4
 
 import fg from "fast-glob";
 import fs from "fs";
@@ -52,6 +52,7 @@ const fontPreloadList = ['400 16px "Noto Sans SC"', '700 16px "Noto Sans SC"'];
 
 fs.mkdirSync(outDir, { recursive: true });
 
+/** @type {Record<string, string>} */
 const mimeTypes = {
   ".css": "text/css; charset=utf-8",
   ".gif": "image/gif",
@@ -123,7 +124,11 @@ if (files.length === 0) {
 }
 
 const serverPort = await new Promise((resolve) => {
-  server.listen(0, "127.0.0.1", () => resolve(server.address().port));
+  server.listen(0, "127.0.0.1", () => {
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("Unable to bind PDF server");
+    resolve(address.port);
+  });
 });
 
 const browser = await chromium.launch();
@@ -200,6 +205,7 @@ for (let i = 0; i < concurrency; i += 1) {
 }
 
 let cursor = 0;
+/** @param {import("playwright").Page} page */
 const worker = async (page) => {
   while (true) {
     const index = cursor;
@@ -207,7 +213,6 @@ const worker = async (page) => {
     cursor += 1;
 
     const file = files[index];
-    const inputPath = path.join(distDir, file);
     const outputPath = path.join(outDir, file.replace(/\.html$/, ".pdf"));
 
     fs.mkdirSync(path.dirname(outputPath), { recursive: true });

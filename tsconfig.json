@@ -11,7 +11,9 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["node", "vitepress/client"]
+    "types": ["node", "vitepress/client"],
+    "allowImportingTsExtensions": true,
+    "checkJs": true
   },
   "include": [
     "env.d.ts",
@@ -19,7 +21,9 @@
     ".vitepress/**/*.mts",
     ".vitepress/**/*.vue",
     "scripts/**/*.ts",
-    "scripts/**/*.mts"
+    "scripts/**/*.mts",
+    "vite.config.ts",
+    "scripts/**/*.js"
   ],
   "exclude": ["node_modules", ".vitepress/cache", ".vitepress/dist"]
 }

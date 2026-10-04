@@ -2,11 +2,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitepress";
 
-import { configureImageOptimization } from "./markdown/imageOptimization";
-import { buildNavItems } from "./siteData/nav";
-import { buildSidebarItems } from "./siteData/sidebar";
-import { buildTransformHead } from "./siteData/transformHead";
-import mapShortUrl from "./theme/components/shortUrl/mapShortUrl";
+import { configureImageOptimization } from "./markdown/imageOptimization.ts";
+import { buildNavItems } from "./siteData/nav.ts";
+import { buildSidebarItems } from "./siteData/sidebar.ts";
+import { buildTransformHead } from "./siteData/transformHead.ts";
+import mapShortUrl from "./theme/components/shortUrl/mapShortUrl.ts";
 
 const configDir = path.dirname(fileURLToPath(import.meta.url));
 const contentRoot = path.resolve(configDir, "..");
@@ -118,6 +118,6 @@ export default defineConfig({
 
   // 生成哈希 - 路径对应表
   buildEnd: (siteConfig) => {
-    mapShortUrl(siteConfig);
+    return mapShortUrl(siteConfig);
   },
 });

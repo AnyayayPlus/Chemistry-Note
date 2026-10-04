@@ -13,7 +13,14 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  validate:
+    if: ${{ github.repository_owner == 'AnyayayPlus' }}
+    uses: ./.github/workflows/check.yml
+    with:
+      upload-build: true
+
   build-and-deploy:
+    needs: validate
     if: ${{ github.repository_owner == 'AnyayayPlus' }}
     runs-on: ubuntu-latest
     outputs:
@@ -30,23 +37,27 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1.21.1
         with:
-          bun-version: 1.3.14
+          version: 1.0.0
+          node-version-file: .node-version
+          cache: true
+          run-install: |
+            args: ["--frozen-lockfile"]
 
-      - name: Install Dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Build Project
-        run: bun run docs:build
+      - name: Download Site
+        uses: actions/download-artifact@v8
+        with:
+          name: site-dist
+          path: .vitepress/dist
 
       - name: Detect changed pages
         id: changed_pages
         run: |
           set -euo pipefail
 
-          bun scripts/changed-pages.js --base "${{ github.event.before }}" --head "${{ github.sha }}" --out-dir .github/changed-pages
+          node scripts/changed-pages.js --base "${{ github.event.before }}" --head "${{ github.sha }}" --out-dir .github/changed-pages
 
           export_all=$(cat .github/changed-pages/export-all.txt)
           changed_count=$(grep -c . .github/changed-pages/changed-pages.txt || true)
@@ -71,10 +82,10 @@ jobs:
         if: steps.changed_pages.outputs.has_pdf_changes == 'true'
         uses: actions/upload-artifact@v7
         with:
-          name: site-dist
-          path: |
-            .vitepress/dist
-            .github/changed-pages
+          name: changed-pages
+          path: .github/changed-pages
+          include-hidden-files: true
+          if-no-files-found: error
           retention-days: 1
 
       - name: Deploy to Server
@@ -119,21 +130,28 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Download build artifacts
+      - name: Download changed pages
+        uses: actions/download-artifact@v8
+        with:
+          name: changed-pages
+          path: .github/changed-pages
+
+      - name: Download Site
+        if: needs.build-and-deploy.outputs.needs_pdf_export == 'true'
         uses: actions/download-artifact@v8
         with:
           name: site-dist
-          path: .
+          path: .vitepress/dist
 
-      - name: Setup Bun
+      - name: Setup Vite+
         if: needs.build-and-deploy.outputs.needs_pdf_export == 'true'
-        uses: oven-sh/setup-bun@v2
+        uses: voidzero-dev/setup-vp@v1.21.1
         with:
-          bun-version: 1.3.14
-
-      - name: Install Dependencies
-        if: needs.build-and-deploy.outputs.needs_pdf_export == 'true'
-        run: bun install --frozen-lockfile
+          version: 1.0.0
+          node-version-file: .node-version
+          cache: true
+          run-install: |
+            args: ["--frozen-lockfile"]
 
       - name: Install CJK fonts
         if: needs.build-and-deploy.outputs.needs_pdf_export == 'true'
@@ -148,7 +166,7 @@ jobs:
 
       - name: Install Playwright Browsers
         if: needs.build-and-deploy.outputs.needs_pdf_export == 'true'
-        run: bunx playwright install --with-deps chromium
+        run: vp exec playwright install --with-deps chromium
 
       - name: Export PDFs
         if: needs.build-and-deploy.outputs.needs_pdf_export == 'true'
@@ -159,9 +177,9 @@ jobs:
 
           concurrency=$(( $(nproc) * 2 ))
           if [ "$EXPORT_ALL" = "true" ]; then
-            PDF_USE_GOOGLE_FONT=1 bun scripts/export-pdf.js --out-dir pdf-repo --concurrency "$concurrency"
+            PDF_USE_GOOGLE_FONT=1 node scripts/export-pdf.js --out-dir pdf-repo --concurrency "$concurrency"
           else
-            PDF_USE_GOOGLE_FONT=1 bun scripts/export-pdf.js --list .github/changed-pages/changed-pages.txt --out-dir pdf-repo --concurrency "$concurrency"
+            PDF_USE_GOOGLE_FONT=1 node scripts/export-pdf.js --list .github/changed-pages/changed-pages.txt --out-dir pdf-repo --concurrency "$concurrency"
           fi
 
       - name: Remove deleted PDFs

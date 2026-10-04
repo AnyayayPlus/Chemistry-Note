@@ -14,6 +14,7 @@ const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const projectConfig = loadProjectConfig(path.resolve(__dirname, ".."));
 
 const args = process.argv.slice(2);
+/** @param {string} flag */
 const getArgValue = (flag) => {
   const index = args.indexOf(flag);
   if (index === -1) {
@@ -32,6 +33,7 @@ const outDir = outDirInput
 // 全 0 的 SHA 表示“无基准”，需要全量导出
 const zeroSha = /^0+$/;
 // 判断是否属于需要全量导出的“全局变更”
+/** @param {string} filePath */
 const isGlobalChange = (filePath) => {
   if (!filePath) {
     return false;
@@ -41,6 +43,7 @@ const isGlobalChange = (filePath) => {
 };
 
 // 将 .md 路径映射为站点输出的 .html 路径
+/** @param {string} filePath */
 const mdToHtml = (filePath) => {
   if (!filePath) {
     return null;
@@ -61,8 +64,8 @@ const mdToHtml = (filePath) => {
 
 const outputs = {
   forceAll: false, // 是否需要全量导出
-  changed: new Set(), // 变更的页面列表
-  deleted: new Set(), // 删除的页面列表
+  changed: new Set(/** @type {string[]} */ ([])), // 变更的页面列表
+  deleted: new Set(/** @type {string[]} */ ([])), // 删除的页面列表
 };
 
 // base 不存在或是全 0，则直接全量
@@ -75,7 +78,7 @@ if (!base || zeroSha.test(base)) {
     diffOutput = execFileSync("git", ["diff", "--name-status", "-z", `${base}..${head}`], {
       encoding: "utf8",
     }).trim();
-  } catch (error) {
+  } catch {
     // 失败时兜底为全量
     outputs.forceAll = true;
   }
@@ -134,10 +137,10 @@ const changedList = outputs.forceAll
   ? []
   : Array.from(outputs.changed)
       .filter((file) => shouldExportPdfPage(file, projectConfig))
-      .sort();
+      .sort((a, b) => a.localeCompare(b));
 const deletedList = Array.from(outputs.deleted)
   .filter((file) => shouldExportPdfPage(file, projectConfig))
-  .sort();
+  .sort((a, b) => a.localeCompare(b));
 
 // 写入结果文件，供后续工作流读取
 fs.writeFileSync(path.join(outDir, "export-all.txt"), outputs.forceAll ? "true" : "false");

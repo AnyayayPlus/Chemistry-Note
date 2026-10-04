@@ -102,3 +102,23 @@
 11. 邢其毅等.基础有机化学:第4版[M].北京:北京大学出版社,2016.
 
 > 部分内容使用了 **Chat-GPT** 等工具辅助书写以及检查内容的正确性
+
+## 本地开发
+
+项目使用 Node 24.21.0、pnpm 10.33.0 和 Vite+ 1.0.0，版本分别固定在 `.node-version`、`package.json` 和 `pnpm-workspace.yaml` 中。先按照 [Vite+ 指引](https://viteplus.dev/guide/) 安装 `vp`，再运行：
+
+```sh
+vp install --frozen-lockfile
+vp run docs:dev
+```
+
+- `vp run check`：格式、lint、TypeScript 和 Vue 组件类型检查。
+- `vp run format`：自动格式化。
+- `vp run docs:build` / `vp run docs:preview`：构建和预览站点。
+- PDF 导出见 [scripts/README.md](scripts/README.md)，脚本使用 Node 执行。
+
+已有克隆若仍使用旧的 Husky hooks（`git config --get core.hooksPath` 输出 `.husky/_`），先运行 `git config --local --unset core.hooksPath`，再运行 `vp config --no-agent`，切换到新的提交钩子。
+
+提交前通过 `vp staged` 自动格式化暂存文件。PR 检查会执行检查和站点构建；生产部署复用同一检查流程的构建产物。VitePress 仍负责站点构建，因此请使用 `vp run docs:build`。
+
+外部构建平台（如 Cloudflare Pages）应设置 Node 24.21.0，安装命令为 `pnpm install --frozen-lockfile`，构建命令为 `pnpm run docs:build`，输出目录为 `.vitepress/dist`。
