@@ -32,6 +32,9 @@ export:
       - "README.html"
       - "hidePage/**"
       - "scripts/**"
+      # Legacy URLs redirect to the renumbered articles; do not export redirect pages.
+      - "08 化学反应能量与速率/06 化学反应速率与限度.html"
+      - "08 化学反应能量与速率/07 化学反应速率进阶.html"
       - "00 说明/向明天 · 2026 高考.html"
       - "00 说明/贡献指南.html"
     # VitePress 构建产物目录
