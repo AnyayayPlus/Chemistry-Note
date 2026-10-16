@@ -1,12 +1,19 @@
-name: Deploy to Production Server
+name: Check and Publish Chemistry Note
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
 
 permissions:
   contents: read
+
+env:
+  REGISTRY: ${{ vars.TCR_REGISTRY || 'ccr.ccs.tencentyun.com' }}
+  TCR_NAMESPACE: ${{ vars.TCR_NAMESPACE }}
+  TCR_REPOSITORY: ${{ vars.TCR_REPOSITORY }}
+  IMAGE: ${{ vars.TCR_REGISTRY || 'ccr.ccs.tencentyun.com' }}/${{ vars.TCR_NAMESPACE }}/${{ vars.TCR_REPOSITORY }}
 
 concurrency:
   group: production-deploy
@@ -19,9 +26,9 @@ jobs:
     with:
       upload-build: true
 
-  build-and-deploy:
+  prepare-pdfs:
     needs: validate
-    if: ${{ github.repository_owner == 'AnyayayPlus' }}
+    if: github.repository_owner == 'AnyayayPlus' && github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
       export_all: ${{ steps.changed_pages.outputs.export_all }}
@@ -88,44 +95,127 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-      - name: Deploy to Server
-        if: vars.MIGRATION_FREEZE != 'true'
+  publish:
+    needs: validate
+    if: github.repository_owner == 'AnyayayPlus' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && vars.MIGRATION_FREEZE != 'true' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Validate repository variables
+        shell: bash
         env:
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
-          SERVER_USER: ${{ secrets.SERVER_USER }}
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SERVER_HOST_KEY: ${{ secrets.SERVER_HOST_KEY }}
-          TARGET_DIR: ${{ secrets.TARGET_DIR }}
+          DOKPLOY_WEBHOOK_URL: ${{ secrets.DOKPLOY_WEBHOOK_URL }}
         run: |
-          set -euo pipefail
+          for variable in TCR_NAMESPACE TCR_REPOSITORY DOKPLOY_WEBHOOK_URL; do
+            if [[ -z "${!variable}" ]]; then
+              echo "::error::Missing Actions variable or secret: $variable"
+              exit 1
+            fi
+          done
 
-          if [ -z "$TARGET_DIR" ]; then
-            echo "TARGET_DIR is empty"
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download built site
+        uses: actions/download-artifact@v8
+        with:
+          name: site-dist
+          path: .vitepress/dist/
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to Tencent TCR
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.TCR_USERNAME }}
+          password: ${{ secrets.TCR_PASSWORD }}
+
+      - name: Build and load image
+        id: build
+        timeout-minutes: 15
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: |
+            ${{ env.IMAGE }}:sha-${{ github.sha }}
+            ${{ env.IMAGE }}:latest
+          provenance: false
+          sbom: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Push image to Tencent TCR
+        id: push
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          set -o pipefail
+          docker push "${IMAGE}:sha-${GITHUB_SHA}" | tee "$RUNNER_TEMP/tcr-push.log"
+          digest=$(sed -n 's/.*digest: \(sha256:[a-f0-9]\{64\}\).*/\1/p' "$RUNNER_TEMP/tcr-push.log" | tail -n 1)
+          if [[ -z "$digest" ]]; then
+            echo "::error::Push completed without a registry digest in the output"
             exit 1
           fi
-          if [ -z "$SERVER_HOST_KEY" ]; then
-            echo "SERVER_HOST_KEY is empty"
+          docker push "${IMAGE}:latest" | tee "$RUNNER_TEMP/tcr-latest-push.log"
+          latest_digest=$(sed -n 's/.*digest: \(sha256:[a-f0-9]\{64\}\).*/\1/p' "$RUNNER_TEMP/tcr-latest-push.log" | tail -n 1)
+          if [[ "$latest_digest" != "$digest" ]]; then
+            echo "::error::latest and SHA tags must resolve to the same image digest"
             exit 1
           fi
+          printf 'digest=%s\n' "$digest" >> "$GITHUB_OUTPUT"
 
-          mkdir -p ~/.ssh
-          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
-          printf '%s %s\n' "$SERVER_HOST" "$SERVER_HOST_KEY" > ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/known_hosts
+      - name: Trigger Dokploy deployment
+        timeout-minutes: 2
+        env:
+          DOKPLOY_WEBHOOK_URL: ${{ secrets.DOKPLOY_WEBHOOK_URL }}
+        run: |
+          umask 077
+          jq -n \
+            --arg image "${IMAGE}:latest" \
+            --arg sha "$GITHUB_SHA" \
+            '{registry_package: {package_version: {package_url: $image, container_metadata: {tag: {name: "latest"}}}}, head_commit: {id: $sha}}' \
+            > "$RUNNER_TEMP/dokploy-deploy-request.json"
+          # The supported registry_package payload lets Dokploy check the image and tag.
+          http_code=$(curl --fail --silent --show-error --connect-timeout 10 --max-time 60 \
+            -X POST "$DOKPLOY_WEBHOOK_URL" \
+            -H "accept: application/json" \
+            -H "Content-Type: application/json" \
+            -H "x-github-event: registry_package" \
+            --data-binary "@$RUNNER_TEMP/dokploy-deploy-request.json" \
+            --output "$RUNNER_TEMP/dokploy-deploy-response.json" \
+            --write-out '%{http_code}')
+          if [[ "$http_code" != "200" ]]; then
+            echo "::error::Dokploy webhook rejected the request (HTTP $http_code). Check Auto Deploy and the configured image/tag."
+            exit 1
+          fi
+          jq -e '.message == "Application deployed successfully"' "$RUNNER_TEMP/dokploy-deploy-response.json" > /dev/null
+          echo "Dokploy webhook deployment request accepted. Check Deployments for the final result."
 
-          SSH_OPTS="-i $HOME/.ssh/deploy_key -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts"
-          ssh $SSH_OPTS "$SERVER_USER@$SERVER_HOST" "mkdir -p '$TARGET_DIR'"
-          rsync -az --delete -e "ssh $SSH_OPTS" .vitepress/dist/ "$SERVER_USER@$SERVER_HOST:$TARGET_DIR/"
+      - name: Show deployment image
+        env:
+          IMAGE_DIGEST: ${{ steps.push.outputs.digest }}
+        run: |
+          echo "### Dokploy 部署镜像" >> "$GITHUB_STEP_SUMMARY"
+          echo "Deploy target: ${IMAGE}:latest" >> "$GITHUB_STEP_SUMMARY"
+          echo "${IMAGE}:sha-${GITHUB_SHA}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Digest: ${IMAGE_DIGEST}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Dokploy deployment requested; this confirms submission, not deployment completion." >> "$GITHUB_STEP_SUMMARY"
 
   export-pdfs:
-    needs: build-and-deploy
-    if: needs.build-and-deploy.outputs.has_pdf_changes == 'true'
+    needs: prepare-pdfs
+    if: needs.prepare-pdfs.outputs.has_pdf_changes == 'true'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
-        if: needs.build-and-deploy.outputs.needs_pdf_export == 'true'
+        if: needs.prepare-pdfs.outputs.needs_pdf_export == 'true'
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
@@ -138,14 +228,14 @@ jobs:
           path: .github/changed-pages
 
       - name: Download Site
-        if: needs.build-and-deploy.outputs.needs_pdf_export == 'true'
+        if: needs.prepare-pdfs.outputs.needs_pdf_export == 'true'
         uses: actions/download-artifact@v8
         with:
           name: site-dist
           path: .vitepress/dist
 
       - name: Setup Vite+
-        if: needs.build-and-deploy.outputs.needs_pdf_export == 'true'
+        if: needs.prepare-pdfs.outputs.needs_pdf_export == 'true'
         uses: voidzero-dev/setup-vp@v1.21.1
         with:
           version: 1.0.0
@@ -155,7 +245,7 @@ jobs:
             args: ["--frozen-lockfile"]
 
       - name: Install CJK fonts
-        if: needs.build-and-deploy.outputs.needs_pdf_export == 'true'
+        if: needs.prepare-pdfs.outputs.needs_pdf_export == 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y fonts-noto-cjk fonts-noto-cjk-extra
@@ -166,13 +256,13 @@ jobs:
           git clone --depth 1 https://cnb:${{ secrets.CNB_TOKEN }}@cnb.cool/Seeridia/Chemistry-Note-File.git pdf-repo
 
       - name: Install Playwright Browsers
-        if: needs.build-and-deploy.outputs.needs_pdf_export == 'true'
+        if: needs.prepare-pdfs.outputs.needs_pdf_export == 'true'
         run: vp exec playwright install --with-deps chromium
 
       - name: Export PDFs
-        if: needs.build-and-deploy.outputs.needs_pdf_export == 'true'
+        if: needs.prepare-pdfs.outputs.needs_pdf_export == 'true'
         env:
-          EXPORT_ALL: ${{ needs.build-and-deploy.outputs.export_all }}
+          EXPORT_ALL: ${{ needs.prepare-pdfs.outputs.export_all }}
         run: |
           set -euo pipefail
 
@@ -184,7 +274,7 @@ jobs:
           fi
 
       - name: Remove deleted PDFs
-        if: needs.build-and-deploy.outputs.deleted_count != '0'
+        if: needs.prepare-pdfs.outputs.deleted_count != '0'
         run: |
           while IFS= read -r file; do
             [ -z "$file" ] && continue
