@@ -89,6 +89,7 @@ jobs:
           retention-days: 1
 
       - name: Deploy to Server
+        if: vars.MIGRATION_FREEZE != 'true'
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           SERVER_USER: ${{ secrets.SERVER_USER }}
