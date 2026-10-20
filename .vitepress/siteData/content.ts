@@ -1,4 +1,5 @@
-import fg from "fast-glob";
+import { globSync } from "node:fs";
+import path from "node:path";
 
 import type { PageKind } from "../shared/page.ts";
 
@@ -45,13 +46,17 @@ export type ContentCatalog = {
 };
 
 export const scanContent = (rootDir: string): ContentCatalog => {
-  const entries = fg.sync(["*", "**/*.md"], {
+  const entries = globSync(["*", "**/*.md"], {
     cwd: rootDir,
-    onlyFiles: false,
-    objectMode: true,
-    followSymbolicLinks: false,
-    ignore: CONTENT_EXCLUDES,
-  });
+    withFileTypes: true,
+    exclude: CONTENT_EXCLUDES,
+  }).map((dirent) => ({
+    dirent,
+    path: path
+      .relative(rootDir, path.join(dirent.parentPath, dirent.name))
+      .split(path.sep)
+      .join("/"),
+  }));
   const pages = entries
     .filter((entry) => entry.dirent.isFile() && entry.path.endsWith(".md"))
     .map(({ path: sourcePath }): ContentPage => ({

@@ -1,6 +1,6 @@
 import md5 from "blueimp-md5";
-import fg from "fast-glob";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -75,10 +75,19 @@ await test("PDF links follow the actual configured export scope", () => {
 
 await test("all existing source pages retain their short-link keys and old aliases", () => {
   const shortMap = buildShortUrlMap(scanContent(root));
-  const pages = fg.sync("**/*.md", {
-    cwd: root,
-    ignore: [".vitepress/**", "node_modules/**", "public/**", "data/**", "export/**", "PDF文件/**"],
-  });
+  const pages = fs
+    .globSync("**/*.md", {
+      cwd: root,
+      exclude: [
+        ".vitepress/**",
+        "node_modules/**",
+        "public/**",
+        "data/**",
+        "export/**",
+        "PDF文件/**",
+      ],
+    })
+    .filter((source) => fs.statSync(path.join(root, source)).isFile());
   for (const source of pages) {
     const legacy = source
       .replace(/\\/g, "/")
@@ -91,6 +100,17 @@ await test("all existing source pages retain their short-link keys and old alias
     const key = md5(sourceToShortLinkPath(oldSource)).slice(0, 10);
     assert.equal(shortMap[key], sourceToShortLinkPath(newSource));
   }
+});
+
+await test("formatter preserves chemical subscripts inside Markdown emphasis", () => {
+  const input = String.raw`**$\ce{C_nH_{2n-6}}\quad (n > 6)$**` + "\n";
+  const result = spawnSync(
+    process.execPath,
+    [path.join(root, "node_modules/vite-plus/bin/vp"), "fmt", "--stdin-filepath", "formula.md"],
+    { input, encoding: "utf8" },
+  );
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, input);
 });
 
 await test("catalog consumers refresh together after adding, renaming and deleting content", () => {
@@ -109,11 +129,20 @@ await test("catalog consumers refresh together after adding, renaming and deleti
       "01 第一章/01 第一节.md",
       "01 第一章/子目录/补充.md",
       "hidePage/shortUrl.md",
+      ".hidden.md",
+      ".hidden/ignored.md",
+      ".vitepress/generated.md",
+      "node_modules/package/README.md",
+      "01 第一章/node_modules/package/README.md",
+      "01 第一章/dist/generated.md",
       "data/generated.md",
       "public/example.md",
       "pdf-repo/README.md",
     ])
       write(source);
+    fs.mkdirSync(path.join(temp, "01 第一章/目录.md"));
+    fs.symlinkSync(path.join(temp, "01 第一章"), path.join(temp, "04 外链"), "dir");
+    fs.symlinkSync(path.join(temp, "index.md"), path.join(temp, "linked.md"), "file");
     const initial = scanContent(temp);
     assert.deepEqual(
       initial.sections.map((section) => section.name),
@@ -126,6 +155,9 @@ await test("catalog consumers refresh together after adding, renaming and deleti
     assert.ok(initial.pages.some((page) => page.sourcePath === "hidePage/shortUrl.md"));
     assert.ok(initial.pages.some((page) => page.sourcePath === "01 第一章/子目录/补充.md"));
     assert.ok(!initial.pages.some((page) => /^(data|public|pdf-repo)\//.test(page.sourcePath)));
+    assert.ok(!initial.pages.some((page) => page.sourcePath.startsWith(".")));
+    assert.ok(!initial.pages.some((page) => /(^|\/)(node_modules|dist)\//.test(page.sourcePath)));
+    assert.ok(!initial.pages.some((page) => /linked\.md|目录\.md|04 外链/.test(page.sourcePath)));
     const added = "03 第三章/01 新文章.md";
     write("03 第三章/index.md");
     write(added);

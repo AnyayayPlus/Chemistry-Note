@@ -1,6 +1,5 @@
 // node scripts/export-pdf.js --concurrency 4
 
-import fg from "fast-glob";
 import fs from "fs";
 import http from "http";
 import path from "path";
@@ -113,10 +112,12 @@ if (listPath) {
   files = Array.from(new Set(files));
   files = files.filter((file) => fs.existsSync(path.join(distDir, file)));
 } else {
-  files = await fg(projectConfig.export.pdf.include, {
-    cwd: distDir,
-    ignore: projectConfig.export.pdf.exclude,
-  });
+  files = fs
+    .globSync(projectConfig.export.pdf.include, {
+      cwd: distDir,
+      exclude: projectConfig.export.pdf.exclude,
+    })
+    .filter((file) => fs.statSync(path.join(distDir, file)).isFile());
 }
 
 if (files.length === 0) {

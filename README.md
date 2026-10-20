@@ -102,27 +102,3 @@
 11. 邢其毅等.基础有机化学:第4版[M].北京:北京大学出版社,2016.
 
 > 部分内容使用了 **Chat-GPT** 等工具辅助书写以及检查内容的正确性
-
-## 本地开发
-
-项目使用 Node 24.21.0、pnpm 10.33.0 和 Vite+ 1.0.0，版本分别固定在 `.node-version`、`package.json` 和 `pnpm-workspace.yaml` 中。先按照 [Vite+ 指引](https://viteplus.dev/guide/) 安装 `vp`，再运行：
-
-```sh
-vp install --frozen-lockfile
-vp run docs:dev
-```
-
-- `vp run check`：格式、lint、TypeScript 和 Vue 组件类型检查。
-- `vp run format`：自动格式化。
-- `vp run docs:build` / `vp run docs:preview`：构建和预览站点。
-- PDF 导出见 [scripts/README.md](scripts/README.md)，脚本使用 Node 执行。
-
-已有克隆若仍使用旧的 Husky hooks（`git config --get core.hooksPath` 输出 `.husky/_`），先运行 `git config --local --unset core.hooksPath`，再运行 `vp config --no-agent`，切换到新的提交钩子。
-
-提交前通过 `vp staged` 自动格式化暂存文件。PR 检查会执行检查和站点构建；生产部署复用同一检查流程的构建产物。VitePress 仍负责站点构建，因此请使用 `vp run docs:build`。
-
-外部构建平台（如 Cloudflare Pages）应设置 Node 24.21.0，安装命令为 `pnpm install --frozen-lockfile`，构建命令为 `pnpm run docs:build`，输出目录为 `.vitepress/dist`。
-
-页面路径与分类规则集中在 `.vitepress/shared/page.ts`，供主题、SEO、短链接及 PDF 脚本共同使用。`config.yml` 的 `export.pdf.include` / `exclude` 同时决定导出范围和“下载本页”按钮是否显示。`vp run test:pages` 可检查路径兼容性、旧短链接和 PDF 资格规则，已包含在 `vp run check` 中。
-
-内容清单由 `.vitepress/siteData/content.ts` 统一扫描生成，导航、侧边栏及短链接从同一清单派生。开发模式下新增、删除或重命名 Markdown 文件会自动重载开发配置、刷新目录，`/shortmap.json` 也会同步更新；普通正文编辑继续使用 VitePress 的热更新。新增章节请保留 `NN 章节名/index.md` 的目录约定。

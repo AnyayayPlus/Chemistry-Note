@@ -1,8 +1,13 @@
 catalog:
-  vite: npm:@voidzero-dev/vite-plus-core@1.0.0
-  vite-plus: 1.0.0
+  vite: npm:@voidzero-dev/vite-plus-core@1.3.0
+  vite-plus: 1.3.0
 overrides:
   vite@*: "catalog:"
+  "@xmldom/xmldom@<0.9.12": ^0.9.12
+  # Keep the final MathJax 3 release instead of pnpm's undeprecated 3.2.1 fallback.
+  mathjax-full: 3.2.2
+  # Oxfmt 0.71–0.73 escape mhchem subscripts inside Markdown emphasis.
+  oxfmt: 0.70.0
 peerDependencyRules:
   allowAny:
     - vite

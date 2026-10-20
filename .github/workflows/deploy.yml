@@ -45,9 +45,9 @@ jobs:
           persist-credentials: false
 
       - name: Setup Vite+
-        uses: voidzero-dev/setup-vp@v1.21.1
+        uses: voidzero-dev/setup-vp@v1.21.2
         with:
-          version: 1.0.0
+          version: 1.3.0
           node-version-file: .node-version
           cache: true
           run-install: |
@@ -115,7 +115,7 @@ jobs:
           done
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Download built site
         uses: actions/download-artifact@v8
@@ -236,9 +236,9 @@ jobs:
 
       - name: Setup Vite+
         if: needs.prepare-pdfs.outputs.needs_pdf_export == 'true'
-        uses: voidzero-dev/setup-vp@v1.21.1
+        uses: voidzero-dev/setup-vp@v1.21.2
         with:
-          version: 1.0.0
+          version: 1.3.0
           node-version-file: .node-version
           cache: true
           run-install: |
