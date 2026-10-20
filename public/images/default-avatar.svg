@@ -1,0 +1,9 @@
+<!-- Icon: Lucide User Round (ISC). See default-avatar.LICENSE.txt. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 32 32" role="img" aria-labelledby="title">
+  <title id="title">Default user avatar</title>
+  <rect width="32" height="32" fill="#f3f4f6" />
+  <g transform="translate(4 4)" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="8" r="5" />
+    <path d="M20 21a8 8 0 0 0-16 0" />
+  </g>
+</svg>
