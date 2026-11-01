@@ -52,38 +52,36 @@ features:
 import { VPTeamMembers } from 'vitepress/theme'
 import { CCAppreciators, CCFeedbackers } from '/.vitepress/theme/components'
 
-import members from '/data/members.json'
-import feedbackers from '/data/feedbackers.json'
-import appreciators from '/data/appreciators.json'
+import { useCommunity } from '/.vitepress/theme/composables/useCommunity'
 
-const membersList = members.members
-const feedbackersList = feedbackers.feedbackers
-const appreciatorsList = appreciators.appreciators
-const totalAppreciation = appreciatorsList
-  .reduce((sum, item) => sum + Number.parseFloat(item.amount), 0)
-  .toFixed(2)
+const { community, status, loadCommunity, totalAppreciation } = useCommunity()
 </script>
 
 ## 共建与支持
 
 这个项目由共建者、反馈者与赞助者共同维护，感谢每一位参与者。
 
+<p v-if="status === 'loading'" role="status">名单加载中…</p>
+<p v-else-if="status === 'error'" role="status">
+  名单暂时无法加载。<button type="button" style="color: var(--vp-c-brand-1); text-decoration: underline" @click="loadCommunity">重试</button>
+</p>
+
 <div class="home-community__stats">
   <a href="/00%20说明/Readme#共建者名录" class="home-community__stat">
     <span class="label">贡献者 Contributors</span>
-    <strong>{{ membersList.length }}</strong>
+    <strong>{{ status === 'ready' ? community.members.length : '—' }}</strong>
   </a>
   <a href="/00%20说明/Readme#反馈者名录" class="home-community__stat">
     <span class="label">反馈者 Feedbackers</span>
-    <strong>{{ feedbackersList.length }}</strong>
+    <strong>{{ status === 'ready' ? community.feedbackers.length : '—' }}</strong>
   </a>
   <a href="/00%20说明/Readme#以及" class="home-community__stat">
     <span class="label">赞助者 Appreciators</span>
-    <strong>{{ appreciatorsList.length }}</strong>
+    <strong>{{ status === 'ready' ? community.appreciators.length : '—' }}</strong>
   </a>
   <a href="/00%20说明/Readme#以及" class="home-community__stat">
     <span class="label">已筹集 Total Raised</span>
-    <strong>{{ totalAppreciation }} CNY</strong>
+    <strong>{{ status === 'ready' ? `${totalAppreciation} CNY` : '—' }}</strong>
   </a>
 </div>
 
@@ -91,13 +89,13 @@ const totalAppreciation = appreciatorsList
 
 参与编辑、补充与校对的朋友。
 
-<VPTeamMembers size="small" :members="membersList" />
+<VPTeamMembers v-if="status === 'ready'" size="small" :members="community.members" />
 
 ## 反馈者 Feedbackers
 
 帮助我们发现问题并持续改进内容的朋友。
 
-<CCFeedbackers :items="feedbackersList" />
+<CCFeedbackers v-if="status === 'ready'" :items="community.feedbackers" />
 
 <p class="home-inline-tip">
   也发现了错误？欢迎通过
@@ -109,7 +107,7 @@ const totalAppreciation = appreciatorsList
 
 为项目长期维护提供支持的朋友。
 
-<CCAppreciators :items="appreciatorsList" />
+<CCAppreciators v-if="status === 'ready'" :items="community.appreciators" />
 
 <p class="home-inline-tip">
   本项目对你也有帮助？欢迎查看
