@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { DefaultTheme } from "vitepress";
 
-import { useData, useRoute } from "vitepress";
+import { useData } from "vitepress";
 import { computed } from "vue";
 
 import { getSectionKey } from "../../shared/page.ts";
@@ -12,10 +12,9 @@ type ChapterLinkItem = {
   link: string;
 };
 
-const { theme } = useData();
-const route = useRoute();
+const { page, theme } = useData();
 
-const currentSectionKey = computed(() => getSectionKey(route.path));
+const currentSectionKey = computed(() => getSectionKey(page.value.relativePath));
 
 const rootSidebar = computed<SidebarItem[]>(() => {
   const sidebar = theme.value.sidebar;
