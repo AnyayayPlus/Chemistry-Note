@@ -44,12 +44,9 @@ description: "Anyayay's Chemistry Note 的使用说明，包括如何浏览、�
 import { VPTeamMembers } from 'vitepress/theme'
 import { CCAppreciators, CCAppreciatePayments, CCFeedbackers } from '/.vitepress/theme/components'
 
-import appreciators from "/data/appreciators.json"
-import members from '/data/members.json'
-import feedbackers from '/data/feedbackers.json'
+import { useCommunity } from '/.vitepress/theme/composables/useCommunity'
 
-const appreciatorsList = appreciators.appreciators
-const membersList = members.members
+const { community, status, loadCommunity } = useCommunity()
 
 const appreciatePayments = [
   {
@@ -67,7 +64,12 @@ const appreciatePayments = [
 
 如果有空？欢迎加入我们，一起完善这个项目！
 
-<VPTeamMembers size="small" :members="membersList"/>
+<p v-if="status === 'loading'" role="status">名单加载中…</p>
+<p v-else-if="status === 'error'" role="status">
+  名单暂时无法加载。<button type="button" style="color: var(--vp-c-brand-1); text-decoration: underline" @click="loadCommunity">重试</button>
+</p>
+
+<VPTeamMembers v-if="status === 'ready'" size="small" :members="community.members"/>
 
 > [!NOTE]
 > 当前该笔记项目正在寻找共建者！（有意者与我联系 seeridia@gmail.com ）
@@ -76,7 +78,7 @@ const appreciatePayments = [
 
 感谢下面这些朋友对本项目中存在的问题进行反馈：
 
-<CCFeedbackers :items="feedbackers.feedbackers" />
+<CCFeedbackers v-if="status === 'ready'" :items="community.feedbackers" />
 
 > 目前收录的反馈者名单较新（2026 年后），对于之前反馈过问题的朋友，如果没有出现在名单中，请及时与我联系，我会补充上去的！
 
@@ -110,4 +112,4 @@ const appreciatePayments = [
 
 感谢下面这些朋友对本项目的赞赏支持：
 
-<CCAppreciators :items="appreciatorsList" />
+<CCAppreciators v-if="status === 'ready'" :items="community.appreciators" />

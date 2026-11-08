@@ -1,7 +1,6 @@
 <script setup lang="ts">
 interface Feedbacker {
   name: string;
-  email?: string;
 }
 
 defineProps<{
@@ -11,12 +10,7 @@ defineProps<{
 
 <template>
   <div class="CCFeedbackers">
-    <div
-      v-for="item in items"
-      :key="item.name"
-      :title="item.email || undefined"
-      class="CCFeedbackersItem"
-    >
+    <div v-for="(item, index) in items" :key="index" class="CCFeedbackersItem">
       {{ item.name }}
     </div>
   </div>
