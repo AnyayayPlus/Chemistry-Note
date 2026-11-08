@@ -72,7 +72,7 @@ export function useCommunity() {
     const timeout = setTimeout(() => current.abort(), 10000);
     status.value = "loading";
     try {
-      const response = await fetch(COMMUNITY_API, { cache: "no-store", signal: current.signal });
+      const response = await fetch(COMMUNITY_API, { signal: current.signal });
       if (!response.ok) throw new Error("Community API request failed");
       const data: unknown = await response.json();
       if (!isCommunityData(data)) throw new Error("Invalid community API response");
