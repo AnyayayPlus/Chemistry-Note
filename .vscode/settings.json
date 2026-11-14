@@ -26,5 +26,8 @@
   },
   "markdown.validate.enabled": true,
   "markdown.validate.fileLinks.enabled": "warning",
-  "markdown.validate.referenceLinks.enabled": "ignore"
+  "markdown.validate.referenceLinks.enabled": "ignore",
+  "files.exclude": {
+    "**/.workbuddy": true
+  }
 }
