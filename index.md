@@ -1,12 +1,12 @@
 ---
 layout: home
 
-description: "Anyayay's Chemistry Note 是基于高中教科书的免费化学笔记，涵盖原子结构、元素性质、微粒间作用力、分子空间结构、有机化学基础、化学物质概念、元素化合物、化学实验、反应能量与速率、化学平衡和热效应等十大板块，提供知识点讲解和解题技巧。"
+description: "Anyayay's Chemistry Note 是基于高中教科书的免费化学笔记，涵盖原子结构与元素性质、微粒间作用力与物质性质、分子空间结构与物质性质、有机化学基础、化学物质基本概念、元素及其化合物、化学实验、化学反应能量与速率、化学平衡等九大板块，提供知识点讲解和解题技巧。"
 
 hero:
   name: "Anyayay's \nChemistry Note"
   text: "化学笔记"
-  tagline: "覆盖原子结构、有机化学、化学实验等十大板块，持续更新中"
+  tagline: "覆盖原子结构、有机化学、化学实验等九大板块，持续更新中"
   image:
     src: /images/icon.svg
     alt: Anyayay's Chemistry Note
