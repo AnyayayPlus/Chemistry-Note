@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, shallowRef, useTemplateRef } from "vue";
 
-import type { SiteFontFamily } from "../composables/useSiteSettings";
+import type {
+  ContributorsDisplay,
+  ReadingTheme,
+  SiteFontFamily,
+} from "../composables/useSiteSettings";
 
 import { useSiteSettings } from "../composables/useSiteSettings";
 
@@ -29,15 +33,23 @@ const onKeydown = (event: KeyboardEvent) => {
   if (event.key === "Escape" && isOpen.value) closeDialog();
 };
 
-const updateBooleanSetting = (
-  key: "showContributors" | "showOutline" | "showComments",
-  event: Event,
-) => {
+const updateBooleanSetting = (key: "showOutline" | "showComments", event: Event) => {
   updateSiteSettings(key, (event.target as HTMLInputElement).checked);
+};
+
+const updateContributorsDisplay = (event: Event) => {
+  updateSiteSettings(
+    "contributorsDisplay",
+    (event.target as HTMLSelectElement).value as ContributorsDisplay,
+  );
 };
 
 const updateFontFamily = (event: Event) => {
   updateSiteSettings("fontFamily", (event.target as HTMLSelectElement).value as SiteFontFamily);
+};
+
+const updateReadingTheme = (event: Event) => {
+  updateSiteSettings("readingTheme", (event.target as HTMLSelectElement).value as ReadingTheme);
 };
 
 onBeforeUnmount(() => {
@@ -117,14 +129,17 @@ onBeforeUnmount(() => {
         </header>
 
         <div class="cc-settings-dialog__body">
-          <label class="cc-settings-option">
-            <span class="cc-settings-option__text">显示「本文贡献者」</span>
-            <input
-              class="cc-settings-option__control"
-              type="checkbox"
-              :checked="settings.showContributors"
-              @change="updateBooleanSetting('showContributors', $event)"
-            />
+          <label class="cc-settings-select">
+            <span class="cc-settings-select__label">本文贡献者</span>
+            <select
+              class="cc-settings-select__control"
+              :value="settings.contributorsDisplay"
+              @change="updateContributorsDisplay"
+            >
+              <option value="compact">缩略显示</option>
+              <option value="detailed">详细显示</option>
+              <option value="hidden">不显示</option>
+            </select>
           </label>
 
           <label class="cc-settings-option">
@@ -145,6 +160,18 @@ onBeforeUnmount(() => {
               :checked="settings.showComments"
               @change="updateBooleanSetting('showComments', $event)"
             />
+          </label>
+
+          <label class="cc-settings-select">
+            <span class="cc-settings-select__label">阅读主题</span>
+            <select
+              class="cc-settings-select__control"
+              :value="settings.readingTheme"
+              @change="updateReadingTheme"
+            >
+              <option value="default">默认</option>
+              <option value="lapis">Lapis</option>
+            </select>
           </label>
 
           <label class="cc-settings-select">
