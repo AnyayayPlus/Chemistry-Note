@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, shallowRef, useTemplateRef } from "vue";
 
-import type { SiteFontFamily } from "../composables/useSiteSettings";
+import type { ReadingTheme, SiteFontFamily } from "../composables/useSiteSettings";
 
 import { useSiteSettings } from "../composables/useSiteSettings";
 
@@ -38,6 +38,10 @@ const updateBooleanSetting = (
 
 const updateFontFamily = (event: Event) => {
   updateSiteSettings("fontFamily", (event.target as HTMLSelectElement).value as SiteFontFamily);
+};
+
+const updateReadingTheme = (event: Event) => {
+  updateSiteSettings("readingTheme", (event.target as HTMLSelectElement).value as ReadingTheme);
 };
 
 onBeforeUnmount(() => {
@@ -145,6 +149,18 @@ onBeforeUnmount(() => {
               :checked="settings.showComments"
               @change="updateBooleanSetting('showComments', $event)"
             />
+          </label>
+
+          <label class="cc-settings-select">
+            <span class="cc-settings-select__label">阅读主题</span>
+            <select
+              class="cc-settings-select__control"
+              :value="settings.readingTheme"
+              @change="updateReadingTheme"
+            >
+              <option value="default">默认</option>
+              <option value="lapis">Lapis</option>
+            </select>
           </label>
 
           <label class="cc-settings-select">

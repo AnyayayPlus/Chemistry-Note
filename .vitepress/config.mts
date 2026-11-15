@@ -65,6 +65,7 @@ export default defineConfig<SiteThemeConfig>({
           root.classList.toggle("cc-hide-outline", settings.showOutline === false);
           root.classList.toggle("cc-hide-comments", settings.showComments === false);
           root.classList.toggle("cc-font-serif", settings.fontFamily === "serif");
+          root.classList.toggle("cc-reading-lapis", settings.readingTheme === "lapis");
         } catch {}
       })();`,
     ],

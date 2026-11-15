@@ -1,0 +1,90 @@
+/* Adapted from Typora Theme Lapis by YiNN, MIT License. See lapis.LICENSE. */
+html.cc-reading-lapis .vp-doc {
+  --lapis-text: #40464f;
+  --lapis-primary: #4870ac;
+  --lapis-marker: #a2b6d4;
+  --lapis-block: #f6f8fa;
+  --lapis-border: #d9dfe4;
+  --lapis-heading-bg: #4870ac;
+  --lapis-heading-text: #fff;
+  color: var(--lapis-text);
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+html.dark.cc-reading-lapis .vp-doc {
+  --lapis-text: #e4e4e4;
+  --lapis-primary: #abbad4;
+  --lapis-marker: #7d8a9f;
+  --lapis-block: #2a2f3b;
+  --lapis-border: #47556d;
+  --lapis-heading-bg: #47556d;
+  --lapis-heading-text: #f2f3f5;
+}
+
+html.cc-reading-lapis .vp-doc h1,
+html.cc-reading-lapis .vp-doc h2,
+html.cc-reading-lapis .vp-doc h3,
+html.cc-reading-lapis .vp-doc h4,
+html.cc-reading-lapis .vp-doc h5,
+html.cc-reading-lapis .vp-doc h6 {
+  color: var(--lapis-primary);
+  font-family: "Source Han Serif SC", "Noto Serif SC", "Songti SC", STSong, serif;
+}
+
+html.cc-reading-lapis .vp-doc h1 {
+  text-align: center;
+}
+
+html.cc-reading-lapis .vp-doc h2 {
+  display: table;
+  padding: 1px 12.5px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--lapis-heading-bg);
+  color: var(--lapis-heading-text);
+}
+
+html.cc-reading-lapis .vp-doc h2 code,
+html.cc-reading-lapis .vp-doc h2 strong {
+  background: transparent;
+  color: inherit;
+}
+
+html.cc-reading-lapis .vp-doc strong,
+html.cc-reading-lapis .vp-doc a:not(.header-anchor) {
+  color: var(--lapis-primary);
+}
+
+html.cc-reading-lapis .vp-doc li::marker {
+  color: var(--lapis-marker);
+  font-weight: bold;
+}
+
+html.cc-reading-lapis .vp-doc blockquote {
+  padding: 15px 20px;
+  border-left: 3px solid var(--lapis-primary);
+  background: var(--lapis-block);
+  color: var(--lapis-text);
+}
+
+html.cc-reading-lapis .vp-doc :not(pre) > code {
+  background: var(--lapis-block);
+  color: var(--lapis-primary);
+}
+
+html.cc-reading-lapis .vp-doc th,
+html.cc-reading-lapis .vp-doc td {
+  border-color: var(--lapis-border);
+}
+
+html.cc-reading-lapis .vp-doc th {
+  color: var(--lapis-primary);
+}
+
+html.cc-reading-lapis .vp-doc mark {
+  padding: 1px 0.15rem;
+  border-radius: 1px;
+  background: #ffffb5c2;
+  color: #40464f;
+}

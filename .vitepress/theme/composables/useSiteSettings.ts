@@ -1,12 +1,14 @@
 import { readonly, reactive } from "vue";
 
 export type SiteFontFamily = "default" | "serif";
+export type ReadingTheme = "default" | "lapis";
 
 export type SiteSettings = {
   showContributors: boolean;
   showOutline: boolean;
   showComments: boolean;
   fontFamily: SiteFontFamily;
+  readingTheme: ReadingTheme;
 };
 
 const STORAGE_KEY = "cc-site-settings";
@@ -16,6 +18,7 @@ const defaultSettings: SiteSettings = {
   showOutline: true,
   showComments: true,
   fontFamily: "default",
+  readingTheme: "default",
 };
 
 const settings = reactive<SiteSettings>({ ...defaultSettings });
@@ -46,6 +49,10 @@ const normalizeSettings = (value: unknown): Partial<SiteSettings> => {
     nextSettings.fontFamily = rawSettings.fontFamily;
   }
 
+  if (rawSettings.readingTheme === "default" || rawSettings.readingTheme === "lapis") {
+    nextSettings.readingTheme = rawSettings.readingTheme;
+  }
+
   return nextSettings;
 };
 
@@ -62,6 +69,7 @@ const applySiteSettings = () => {
   root.classList.toggle("cc-hide-outline", !settings.showOutline);
   root.classList.toggle("cc-hide-comments", !settings.showComments);
   root.classList.toggle("cc-font-serif", settings.fontFamily === "serif");
+  root.classList.toggle("cc-reading-lapis", settings.readingTheme === "lapis");
 };
 
 const loadSiteSettings = () => {
