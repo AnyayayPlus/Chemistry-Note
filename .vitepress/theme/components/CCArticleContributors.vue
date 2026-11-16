@@ -4,6 +4,7 @@ import { computed, onMounted, ref, watch } from "vue";
 
 import { getPageKind } from "../../shared/page.ts";
 import { GITHUB_REPOSITORY } from "../../shared/site.ts";
+import { useSiteSettings } from "../composables/useSiteSettings";
 
 type GithubCommit = {
   author?: {
@@ -28,6 +29,14 @@ type Contributor = {
 
 const { page } = useData();
 const contributors = ref<Contributor[]>([]);
+const { settings } = useSiteSettings();
+const compact = computed(() => settings.contributorsDisplay === "compact");
+const visibleContributors = computed(() =>
+  compact.value && contributors.value.length > 8
+    ? contributors.value.slice(0, 7)
+    : contributors.value,
+);
+const remainingCount = computed(() => contributors.value.length - visibleContributors.value.length);
 
 const pagePath = computed(() => page.value.relativePath || "");
 const isArticlePage = computed(() => getPageKind(pagePath.value) === "article");
@@ -96,25 +105,30 @@ watch(pagePath, loadContributors);
   <section v-if="isArticlePage && contributors.length" class="cc-article-contributors">
     <h2 class="cc-article-contributors__title">本文贡献者</h2>
 
-    <div class="cc-article-contributors__list">
+    <div class="cc-article-contributors__list" :class="{ 'is-compact': compact }">
       <a
-        v-for="contributor in contributors"
+        v-for="contributor in visibleContributors"
         :key="contributor.login"
         class="cc-article-contributors__item"
         :href="contributor.profile"
         target="_blank"
         rel="noreferrer"
+        :aria-label="`${contributor.name}，${contributor.commits} 次提交`"
+        :title="`${contributor.name} · ${contributor.commits} 次提交`"
       >
-        <img
-          class="cc-article-contributors__avatar"
-          :src="contributor.avatar"
-          :alt="`&keep-color ${contributor.name}`"
-        />
-        <div class="cc-article-contributors__info">
+        <img class="cc-article-contributors__avatar avatar-img" :src="contributor.avatar" alt="" />
+        <div v-if="!compact" class="cc-article-contributors__info">
           <span class="cc-article-contributors__name">{{ contributor.name }}</span>
           <span class="cc-article-contributors__meta">{{ contributor.commits }} commits</span>
         </div>
       </a>
+      <span
+        v-if="compact && remainingCount"
+        class="cc-article-contributors__remaining"
+        :aria-label="`还有 ${remainingCount} 位贡献者，切换至详细显示可查看`"
+        :title="`还有 ${remainingCount} 位贡献者，可在设置中切换至详细显示`"
+        >+{{ remainingCount }}</span
+      >
     </div>
   </section>
 </template>
@@ -149,6 +163,34 @@ watch(pagePath, loadContributors);
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 12px;
+}
+
+.cc-article-contributors__list.is-compact {
+  grid-template-columns: repeat(4, 40px);
+  gap: 8px;
+}
+
+.is-compact .cc-article-contributors__item {
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+}
+
+.is-compact .cc-article-contributors__item:hover {
+  outline: 2px solid var(--vp-c-brand-1);
+  outline-offset: 2px;
+}
+
+.cc-article-contributors__remaining {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--vp-c-default-soft);
+  color: var(--vp-c-text-2);
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .cc-article-contributors__item {

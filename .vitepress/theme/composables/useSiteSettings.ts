@@ -2,9 +2,10 @@ import { readonly, reactive } from "vue";
 
 export type SiteFontFamily = "default" | "serif";
 export type ReadingTheme = "default" | "lapis";
+export type ContributorsDisplay = "compact" | "detailed" | "hidden";
 
 export type SiteSettings = {
-  showContributors: boolean;
+  contributorsDisplay: ContributorsDisplay;
   showOutline: boolean;
   showComments: boolean;
   fontFamily: SiteFontFamily;
@@ -14,7 +15,7 @@ export type SiteSettings = {
 const STORAGE_KEY = "cc-site-settings";
 
 const defaultSettings: SiteSettings = {
-  showContributors: true,
+  contributorsDisplay: "compact",
   showOutline: true,
   showComments: true,
   fontFamily: "default",
@@ -30,11 +31,17 @@ const isSiteFontFamily = (value: unknown): value is SiteFontFamily =>
 const normalizeSettings = (value: unknown): Partial<SiteSettings> => {
   if (!value || typeof value !== "object") return {};
 
-  const rawSettings = value as Partial<Record<keyof SiteSettings, unknown>>;
+  const rawSettings = value as Partial<Record<keyof SiteSettings | "showContributors", unknown>>;
   const nextSettings: Partial<SiteSettings> = {};
 
-  if (typeof rawSettings.showContributors === "boolean") {
-    nextSettings.showContributors = rawSettings.showContributors;
+  if (
+    rawSettings.contributorsDisplay === "compact" ||
+    rawSettings.contributorsDisplay === "detailed" ||
+    rawSettings.contributorsDisplay === "hidden"
+  ) {
+    nextSettings.contributorsDisplay = rawSettings.contributorsDisplay;
+  } else if (rawSettings.showContributors === false) {
+    nextSettings.contributorsDisplay = "hidden";
   }
 
   if (typeof rawSettings.showOutline === "boolean") {
@@ -65,7 +72,7 @@ const applySiteSettings = () => {
   if (typeof document === "undefined") return;
 
   const root = document.documentElement;
-  root.classList.toggle("cc-hide-contributors", !settings.showContributors);
+  root.classList.toggle("cc-hide-contributors", settings.contributorsDisplay === "hidden");
   root.classList.toggle("cc-hide-outline", !settings.showOutline);
   root.classList.toggle("cc-hide-comments", !settings.showComments);
   root.classList.toggle("cc-font-serif", settings.fontFamily === "serif");
