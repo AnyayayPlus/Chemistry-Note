@@ -19,3 +19,5 @@ scripts/pdf-repo-test.txt
 
 .vite-hooks/_/
 .vite/
+
+.idea

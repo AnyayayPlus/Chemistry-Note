@@ -4,6 +4,7 @@ import DefaultTheme from "vitepress/theme";
 
 import CCChapterOverview from "./components/CCChapterOverview.vue";
 import "./custom.css";
+import "./lapis.css";
 import "@waline/client/style";
 
 import CCPdfDownloadButton from "./components/CCPdfDownloadButton.vue";
