@@ -5,6 +5,7 @@ export type ReadingTheme = "default" | "lapis";
 export type ContributorsDisplay = "compact" | "detailed" | "hidden";
 
 export type SiteSettings = {
+  enableEditor: boolean;
   contributorsDisplay: ContributorsDisplay;
   showOutline: boolean;
   showComments: boolean;
@@ -15,6 +16,7 @@ export type SiteSettings = {
 const STORAGE_KEY = "cc-site-settings";
 
 const defaultSettings: SiteSettings = {
+  enableEditor: false,
   contributorsDisplay: "compact",
   showOutline: true,
   showComments: true,
@@ -33,6 +35,8 @@ const normalizeSettings = (value: unknown): Partial<SiteSettings> => {
 
   const rawSettings = value as Partial<Record<keyof SiteSettings | "showContributors", unknown>>;
   const nextSettings: Partial<SiteSettings> = {};
+  if (typeof rawSettings.enableEditor === "boolean")
+    nextSettings.enableEditor = rawSettings.enableEditor;
 
   if (
     rawSettings.contributorsDisplay === "compact" ||
@@ -65,7 +69,11 @@ const normalizeSettings = (value: unknown): Partial<SiteSettings> => {
 
 const persistSettings = () => {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  } catch {
+    // The preference still applies to this visit if browser storage is unavailable.
+  }
 };
 
 const applySiteSettings = () => {

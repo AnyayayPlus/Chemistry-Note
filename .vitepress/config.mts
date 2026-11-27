@@ -2,6 +2,7 @@ import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitepress";
+import { withInlineEditor } from "vitepress-inline-editor/vitepress";
 
 import type { SiteThemeConfig } from "./shared/theme.ts";
 
@@ -27,10 +28,11 @@ const catalog = scanContent(contentRoot);
 const navItems = buildNavItems(catalog);
 const sidebarItems = buildSidebarItems(catalog);
 
-export default defineConfig<SiteThemeConfig>({
+const config = defineConfig<SiteThemeConfig>({
   srcExclude: CONTENT_EXCLUDES,
   vite: {
     plugins: [contentPlugin(contentRoot, () => catalog)],
+    server: { proxy: { "/api/editor/": process.env.EDITOR_API_ORIGIN || "http://127.0.0.1:8787" } },
   },
   title: siteName,
   description: defaultDescription,
@@ -150,4 +152,10 @@ export default defineConfig<SiteThemeConfig>({
       writeFile(path.join(siteConfig.outDir, "pdf-catalog.json"), JSON.stringify({ units })),
     ]);
   },
+});
+
+export default withInlineEditor(config, {
+  repoRoot: contentRoot,
+  include: ["[0-9][0-9] */!(index).md"],
+  revision: process.env.EDITOR_CONTENT_REVISION,
 });

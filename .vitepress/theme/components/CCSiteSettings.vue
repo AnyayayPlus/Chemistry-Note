@@ -33,7 +33,10 @@ const onKeydown = (event: KeyboardEvent) => {
   if (event.key === "Escape" && isOpen.value) closeDialog();
 };
 
-const updateBooleanSetting = (key: "showOutline" | "showComments", event: Event) => {
+const updateBooleanSetting = (
+  key: "showOutline" | "showComments" | "enableEditor",
+  event: Event,
+) => {
   updateSiteSettings(key, (event.target as HTMLInputElement).checked);
 };
 
@@ -129,6 +132,18 @@ onBeforeUnmount(() => {
         </header>
 
         <div class="cc-settings-dialog__body">
+          <details class="cc-settings-editor">
+            <summary>站内编辑</summary>
+            <label class="cc-settings-option">
+              <span class="cc-settings-option__text">显示「编辑此页」按钮</span>
+              <input
+                class="cc-settings-option__control"
+                type="checkbox"
+                :checked="settings.enableEditor"
+                @change="updateBooleanSetting('enableEditor', $event)"
+              />
+            </label>
+          </details>
           <label class="cc-settings-select">
             <span class="cc-settings-select__label">本文贡献者</span>
             <select
@@ -314,6 +329,14 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   gap: 16px;
   min-height: 36px;
+}
+.cc-settings-editor summary {
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--vp-c-text-1);
+}
+.cc-settings-editor .cc-settings-option {
+  margin: 6px 0 0 16px;
 }
 
 .cc-settings-option__text,

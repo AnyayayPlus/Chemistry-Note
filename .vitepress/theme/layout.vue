@@ -1,18 +1,33 @@
 <script setup lang="ts">
 import mediumZoom from "medium-zoom";
-import { useRoute } from "vitepress";
+import { useData, useRoute } from "vitepress";
+import { InlineEditor } from "vitepress-inline-editor/vue";
+import "vitepress-inline-editor/style.css";
 import DefaultTheme from "vitepress/theme";
-import { nextTick, onMounted, onBeforeUnmount, watch } from "vue";
+import { computed, nextTick, onMounted, onBeforeUnmount, watch } from "vue";
 
+import { getPageKind } from "../shared/page";
 import CCArticleContributors from "./components/CCArticleContributors.vue";
 import Breadcrumb from "./components/CCBreadCrumb.vue";
+import CCEditorContributors from "./components/CCEditorContributors.vue";
 import CCFooter from "./components/CCFooter.vue";
 import CCPdfDownloadLink from "./components/CCPdfDownloadLink.vue";
 import { CCPageviews, CCWaline } from "./components/waline";
-import { bootstrapSiteSettings } from "./composables/useSiteSettings";
+import { useEditorContributors } from "./composables/useEditorContributors";
+import { bootstrapSiteSettings, useSiteSettings } from "./composables/useSiteSettings";
 
 const { Layout } = DefaultTheme;
 const route = useRoute();
+const { page } = useData();
+const { settings } = useSiteSettings();
+const editorContributors = useEditorContributors(
+  computed(() => {
+    const path = page.value.filePath || page.value.relativePath;
+    return settings.contributorsDisplay !== "hidden" && getPageKind(path) === "article"
+      ? path
+      : undefined;
+  }),
+);
 const contentImageSelector = ".vp-doc img:not([data-no-zoom])";
 let imageZoom: ReturnType<typeof mediumZoom> | undefined;
 
@@ -104,6 +119,15 @@ watch(
     <!-- 面包屑 -->
     <template #doc-before>
       <Breadcrumb />
+      <ClientOnly><InlineEditor v-if="settings.enableEditor" require-contributor /></ClientOnly>
+    </template>
+
+    <template #doc-footer-before>
+      <CCEditorContributors
+        class="cc-editor-credits-mobile"
+        :items="editorContributors"
+        :detailed="settings.contributorsDisplay === 'detailed'"
+      />
     </template>
 
     <!-- 评论区 -->
@@ -123,6 +147,10 @@ watch(
       <div class="cc-contributors-region">
         <ClientOnly>
           <CCArticleContributors />
+          <CCEditorContributors
+            :items="editorContributors"
+            :detailed="settings.contributorsDisplay === 'detailed'"
+          />
         </ClientOnly>
       </div>
     </template>
@@ -135,6 +163,17 @@ watch(
 </template>
 
 <style scoped>
+.cc-editor-credits-mobile {
+  text-align: end;
+}
+.cc-editor-credits-mobile :deep(ul) {
+  justify-content: flex-end;
+}
+@media (min-width: 80rem) {
+  .cc-editor-credits-mobile {
+    display: none;
+  }
+}
 .home-pdf-action {
   flex-shrink: 0;
   padding: 0.375rem;

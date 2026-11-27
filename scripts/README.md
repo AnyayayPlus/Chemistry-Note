@@ -21,6 +21,20 @@ go -C scripts/pdf test ./...
 
 打印页面复用 VitePress 的主题、MathJax 和笔记配图。打印约束集中在 `scripts/pdf/print.css`。固定版本的 Noto Sans SC 下载后会验证 SHA-256，HarfBuzz 将字体轴固定为常规和粗体。已有同一文件时，可传 `--font-source /path/to/NotoSansSC-VF.ttf`。
 
+## 站内编辑试点接入
+
+站点从 `.vitepress/vendor/` 安装独立编辑器仓库构建的 pnpm 包。当前包对应 `vitepress-inline-editor` 提交 `78058d9`。升级时替换该发布包并更新锁文件。VitePress 构建读取当前 Git SHA；本地联调或没有 Git 元数据的构建环境可用 `EDITOR_CONTENT_REVISION` 指定内容仓库的已知提交。
+
+站点容器与本地 Vite 开发服务通过 `EDITOR_API_ORIGIN` 把同源 `/api/editor/` 转发到投稿服务，默认上游为 `http://127.0.0.1:8787`。分容器运行时填入能从站点容器访问的服务地址。投稿服务使用站点实际来源 `SITE_ORIGIN`、`CONTENT_BRANCH=master` 和 `EDITOR_PATHS='["[0-9][0-9] */!(index).md"]'`。启动示例：
+
+```sh
+pnpm exec vitepress-editor-api --env-file /path/to/editor.env
+```
+
+配置文件同时提供该仓库的 GitHub App 凭据、会话密钥、社区服务的 `EDITOR_CONTRIBUTIONS_URL`（路径为 `/api/internal/editor-contributions`）与两端共用的 `EDITOR_CONTRIBUTIONS_TOKEN`。外部贡献者名单默认读取社区服务的 `/api/public/editor-contributors`，本地联调可用 `VITE_EDITOR_CONTRIBUTORS_API` 指向本机公开名单接口。右上角「设置 → 站内编辑」控制当前浏览器的编辑按钮，初次访问和恢复默认均为关闭。
+
+启动站点开发服务后，运行 `pnpm run test:editor` 检查编辑开关、旧署名接口和按文章展示的名单。可用 `EDITOR_TEST_ORIGIN` 指定开发服务地址，`PLAYWRIGHT_CHANNEL=chrome` 使用本机 Chrome。
+
 ## GitHub Actions
 
 - **Build and Publish PDFs** 手动运行时默认提供预览制品。线上自动发布由 `PDF_PUBLISH_ENABLED=true` 启用。
