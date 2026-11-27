@@ -7,6 +7,7 @@ import { nextTick, onMounted, onBeforeUnmount, watch } from "vue";
 import CCArticleContributors from "./components/CCArticleContributors.vue";
 import Breadcrumb from "./components/CCBreadCrumb.vue";
 import CCFooter from "./components/CCFooter.vue";
+import CCPdfDownloadLink from "./components/CCPdfDownloadLink.vue";
 import { CCPageviews, CCWaline } from "./components/waline";
 import { bootstrapSiteSettings } from "./composables/useSiteSettings";
 
@@ -94,6 +95,12 @@ watch(
 
 <template>
   <Layout>
+    <template #home-hero-actions-before-actions>
+      <div v-if="route.path === '/'" class="home-pdf-action">
+        <CCPdfDownloadLink id="pdf-download" source="home" hero>下载完整 PDF</CCPdfDownloadLink>
+      </div>
+    </template>
+
     <!-- 面包屑 -->
     <template #doc-before>
       <Breadcrumb />
@@ -126,3 +133,10 @@ watch(
     </template>
   </Layout>
 </template>
+
+<style scoped>
+.home-pdf-action {
+  flex-shrink: 0;
+  padding: 0.375rem;
+}
+</style>

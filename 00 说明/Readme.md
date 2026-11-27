@@ -19,7 +19,7 @@ description: "Anyayay's Chemistry Note 的使用说明，包括如何浏览、�
 ## 如何下载 PDF？
 
 1. 顶部的菜单展开后的「下载」可以直接下载当前访问页的 PDF 文件。
-2. 点此链接下载全部章节的 PDF 文件合集: [下载 PDF](https://umami.seeridia.top/q/e8e52FUHV)。
+2. <CCPdfDownloadLink source="readme" fallback="/#pdf-download">下载全部章节的 PDF</CCPdfDownloadLink>。
 
 ## 发现错误？
 
@@ -43,6 +43,7 @@ description: "Anyayay's Chemistry Note 的使用说明，包括如何浏览、�
 <script setup>
 import { VPTeamMembers } from 'vitepress/theme'
 import { CCAppreciators, CCAppreciatePayments, CCFeedbackers } from '/.vitepress/theme/components'
+import CCPdfDownloadLink from '/.vitepress/theme/components/CCPdfDownloadLink.vue'
 
 import { useCommunity } from '/.vitepress/theme/composables/useCommunity'
 

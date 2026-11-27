@@ -12,6 +12,15 @@ RUN printf '%s\n' \
     '    gzip on;' \
     '    gzip_types text/css application/javascript application/json image/svg+xml;' \
     '    error_page 404 /404.html;' \
+    '    location = /pdf-manifest.json {' \
+    '        proxy_pass https://cnb.cool/Seeridia/Chemistry-Note-File/-/git/raw/main/pdf-manifest.json;' \
+    '        proxy_ssl_server_name on;' \
+    '        proxy_ssl_verify on;' \
+    '        proxy_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;' \
+    '        proxy_connect_timeout 5s;' \
+    '        proxy_read_timeout 10s;' \
+    '        add_header Cache-Control "no-store" always;' \
+    '    }' \
     '    location / {' \
     '        try_files $uri $uri.html $uri/ =404;' \
     '        add_header Cache-Control "no-cache" always;' \

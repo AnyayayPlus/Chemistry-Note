@@ -1,3 +1,4 @@
+import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitepress";
@@ -6,6 +7,7 @@ import type { SiteThemeConfig } from "./shared/theme.ts";
 
 import { loadProjectConfig } from "../scripts/project-config.js";
 import { configureImageOptimization } from "./markdown/imageOptimization.ts";
+import { htmlToPdfPath, isPdfExportable } from "./shared/page.ts";
 import { GITHUB_URL } from "./shared/site.ts";
 import { CONTENT_EXCLUDES, scanContent } from "./siteData/content.ts";
 import { contentPlugin } from "./siteData/contentPlugin.ts";
@@ -131,8 +133,21 @@ export default defineConfig<SiteThemeConfig>({
     hostname: siteUrl,
   },
 
-  // 生成哈希 - 路径对应表
-  buildEnd: (siteConfig) => {
-    return mapShortUrl(siteConfig, catalog);
+  buildEnd: async (siteConfig) => {
+    const units = catalog.sections.flatMap((section) =>
+      section.pages
+        .filter((page) => isPdfExportable(page.htmlPath, { include, exclude }))
+        .map((page) => ({
+          chapter: section.name,
+          html: page.htmlPath,
+          pdf: htmlToPdfPath(page.htmlPath),
+          url: page.publicPath,
+          title: page.title,
+        })),
+    );
+    await Promise.all([
+      mapShortUrl(siteConfig, catalog),
+      writeFile(path.join(siteConfig.outDir, "pdf-catalog.json"), JSON.stringify({ units })),
+    ]);
   },
 });

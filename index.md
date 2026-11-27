@@ -14,9 +14,6 @@ hero:
     - theme: brand
       text: 开始阅读
       link: /00%20说明/Readme
-    - theme: alt
-      text: 下载完整 PDF
-      link: https://umami.seeridia.top/q/e8e52FUHV
 
 features:
   - title: 01 原子结构与元素性质

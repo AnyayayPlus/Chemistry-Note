@@ -1,0 +1,217 @@
+@font-face {
+  font-family: "Note Sans";
+  src: url("/fonts/regular.ttf") format("truetype");
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "Note Sans";
+  src: url("/fonts/bold.ttf") format("truetype");
+  font-weight: 600 900;
+}
+
+@page {
+  size: A4;
+  margin: 13mm 15mm 16mm;
+}
+
+:root {
+  --vp-font-family-base: "Note Sans", sans-serif;
+  -webkit-print-color-adjust: exact;
+}
+
+body {
+  margin: 0;
+  font-family: var(--vp-font-family-base);
+}
+
+.pdf-article {
+  font-size: 10pt;
+}
+
+.pdf-article .vp-doc > div {
+  animation: none;
+}
+
+.pdf-breadcrumb {
+  color: var(--vp-c-text-2);
+  font-size: 9.5pt;
+  margin-bottom: 1.25em;
+}
+
+.pdf-breadcrumb::after {
+  color: var(--vp-c-text-3);
+  content: " /";
+}
+
+.pdf-article .vp-doc h1 {
+  font-size: 21pt;
+  line-height: 1.32;
+}
+
+.pdf-article .vp-doc h2 {
+  margin-top: 1.2em;
+  padding-top: 0.75em;
+  font-size: 15pt;
+}
+
+.pdf-article .vp-doc h3 {
+  font-size: 12pt;
+}
+
+.pdf-article .vp-doc :is(h1, h2, h3, h4, h5, h6) {
+  break-after: avoid;
+  overflow-wrap: anywhere;
+}
+
+.pdf-article .vp-doc :is(p, li, th, td) {
+  overflow-wrap: anywhere;
+}
+
+.pdf-article .vp-doc img {
+  max-width: calc(100% - 0.7em);
+  max-height: 150mm;
+  object-fit: contain;
+}
+
+.pdf-article .vp-doc :is(.table-wrapper, div:has(> table)) {
+  overflow: visible;
+}
+
+.pdf-article .vp-doc table {
+  display: table;
+  width: 100%;
+  font-size: 9pt;
+}
+
+.pdf-article .vp-doc tr {
+  break-inside: avoid;
+}
+
+.pdf-article .vp-doc :is(td, th) {
+  padding: 3px 6px;
+  white-space: normal;
+}
+
+.pdf-article .vp-doc table:has(tr > :nth-child(5)) {
+  table-layout: fixed;
+  font-size: 8pt;
+}
+
+.pdf-article .vp-doc table:has(tr > :nth-child(5)) :is(th, td):first-child {
+  width: 12%;
+}
+
+.pdf-article mjx-container,
+.pdf-article mjx-container > svg {
+  max-width: 100%;
+}
+
+.pdf-article :is(td, th) mjx-container > svg,
+.pdf-article mjx-container[display="true"] > svg {
+  height: auto;
+}
+
+.pdf-article mjx-assistive-mml {
+  position: absolute !important;
+  clip-path: inset(50%);
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+}
+
+.pdf-article .vp-doc pre {
+  white-space: pre-wrap;
+}
+
+.pdf-front .pdf-cover {
+  display: flex;
+  min-height: 264mm;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 35mm 8mm 5mm;
+  break-after: page;
+}
+
+.pdf-front .pdf-cover-logo {
+  display: block !important;
+  width: 78px;
+  margin: 0 0 20px;
+}
+
+.pdf-front .pdf-cover h1 {
+  color: var(--vp-c-brand-1);
+  font-size: 33pt;
+  line-height: 1.2;
+}
+
+.pdf-front .pdf-cover-subtitle {
+  color: var(--vp-c-text-2);
+  font-family: Inter, Arial, sans-serif;
+  font-size: 17pt;
+}
+
+.pdf-front .pdf-cover-site {
+  display: flex;
+  width: 100%;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 3mm;
+  margin-top: auto;
+  padding-top: 4mm;
+  border-top: 1px solid var(--vp-c-divider);
+  font-size: 10pt;
+}
+
+.pdf-front .pdf-cover-site-label {
+  display: grid;
+  /* Align the text with the visible QR code inside its quiet zone. */
+  margin-bottom: 2mm;
+  text-align: right;
+  line-height: 1.45;
+}
+
+.pdf-front .pdf-cover-site img {
+  width: 25mm;
+  height: 25mm;
+  margin: 0;
+  image-rendering: pixelated;
+}
+
+.pdf-front .pdf-toc > h1 {
+  margin-bottom: 14px;
+  padding: 0 0 10px;
+  border-bottom: 1px solid var(--vp-c-divider);
+  font-size: 24pt;
+}
+
+.pdf-front .pdf-chapter h2 {
+  margin: 14px 0 4px;
+  padding: 0;
+  border: 0;
+  color: var(--vp-c-brand-1);
+  font-size: 11pt;
+  break-after: avoid;
+}
+
+.pdf-front .pdf-chapter ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 9.5pt;
+}
+
+.pdf-front .pdf-chapter li {
+  border-bottom: 1px solid var(--vp-c-divider);
+  margin: 0;
+  break-inside: avoid;
+}
+
+.pdf-front .pdf-chapter a {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 3px 4px;
+  color: var(--vp-c-text-1);
+  text-decoration: none;
+}

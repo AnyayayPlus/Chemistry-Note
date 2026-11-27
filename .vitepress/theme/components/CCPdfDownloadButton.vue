@@ -7,6 +7,7 @@ import type { SiteThemeConfig } from "../../shared/theme.ts";
 import { htmlToPdfPath, isPdfExportable, sourceToHtmlPath } from "../../shared/page.ts";
 import { PDF_BASE_URL } from "../../shared/site.ts";
 import { trackUmamiEvent } from "../utils/umami";
+import CCPdfDownloadLink from "./CCPdfDownloadLink.vue";
 
 const { page, theme } = useData<SiteThemeConfig>();
 
@@ -22,8 +23,8 @@ const shouldShow = computed(
   () => (page.value.frontmatter?.layout ?? "doc") === "doc" && Boolean(pdfUrl.value),
 );
 
-const trackPdfDownload = (kind: "page" | "all") => {
-  trackUmamiEvent(kind === "page" ? "pdf_download_page" : "pdf_download_all", {
+const trackPageDownload = () => {
+  trackUmamiEvent("pdf_download_page", {
     page_path: page.value.relativePath || page.value.filePath || "",
     page_title: page.value.title || "",
     source: "nav_download",
@@ -39,21 +40,15 @@ const trackPdfDownload = (kind: "page" | "all") => {
       :href="pdfUrl"
       target="_blank"
       rel="noopener"
-      @click="trackPdfDownload('page')"
+      @click="trackPageDownload"
     >
       <span class="CCPdfDownloadButtonBtnLabel">下载本页</span>
       <span class="CCPdfDownloadButtonBtnHint">PDF</span>
     </a>
-    <a
-      class="CCPdfDownloadButtonBtn"
-      href="https://umami.seeridia.top/q/e8e52FUHV"
-      target="_blank"
-      rel="noopener"
-      @click="trackPdfDownload('all')"
-    >
+    <CCPdfDownloadLink class="CCPdfDownloadButtonBtn" source="nav_download">
       <span class="CCPdfDownloadButtonBtnLabel">下载全部</span>
       <span class="CCPdfDownloadButtonBtnHint">PDF</span>
-    </a>
+    </CCPdfDownloadLink>
   </div>
 </template>
 

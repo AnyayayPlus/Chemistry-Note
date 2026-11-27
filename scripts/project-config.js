@@ -1,166 +1,38 @@
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 import YAML from "yaml";
 
-import {
-  isPdfExportable,
-  matchesAnyPattern,
-  normalizeSourcePath,
-} from "../.vitepress/shared/page.ts";
+import { isPdfExportable, sourceToHtmlPath } from "../.vitepress/shared/page.ts";
+import { pageAliases } from "../.vitepress/siteData/pageAliases.ts";
 
-export { matchesAnyPattern };
-
-const defaultConfig = {
-  export: {
-    pdf: {
-      distDir: ".vitepress/dist",
-      outDir: "pdf-repo",
-      concurrency: {
-        default: 8,
-        min: 1,
-        max: 8,
-      },
-      include: ["**/*.html"],
-      exclude: ["404.html", "**/index.html", "s.html", "README.html", "hidePage/**"],
-      page: {
-        format: "A4",
-        margin: {
-          top: "10mm",
-          bottom: "10mm",
-          left: "10mm",
-          right: "10mm",
-        },
-      },
-    },
-    changedPages: {
-      outDir: ".github/changed-pages",
-      globalChange: [
-        ".vitepress/**",
-        "public/**",
-        "data/**",
-        "package.json",
-        "pnpm-workspace.yaml",
-        ".node-version",
-        "vite.config.ts",
-        "pnpm-lock.yaml",
-        "config.yml",
-      ],
-      sourceExtensions: [".md"],
-    },
-  },
+const defaults = {
+  include: ["**/*.html"],
+  exclude: ["404.html", "**/index.html", "s.html", "README.html", "hidePage/**"],
 };
-
-const configFileName = "config.yml";
+const redirectPages = Object.keys(pageAliases).map(sourceToHtmlPath);
 
 /** @param {unknown} value @param {string[]} fallback */
-const asStringArray = (value, fallback) => {
-  if (!Array.isArray(value)) {
-    return fallback;
-  }
+const patterns = (value, fallback) => {
+  if (!Array.isArray(value)) return fallback;
   const items = value.filter((item) => typeof item === "string" && item.length > 0);
   return items.length > 0 ? items : fallback;
 };
 
-/** @param {unknown} value @param {string} fallback */
-const asString = (value, fallback) => (typeof value === "string" && value ? value : fallback);
-
-/** @param {unknown} value @param {number} fallback */
-const asPositiveInteger = (value, fallback) => {
-  const number = Number(value);
-  return Number.isInteger(number) && number > 0 ? number : fallback;
-};
-
-/** @param {typeof defaultConfig} rawConfig */
-const buildConcurrencyConfig = (rawConfig) => {
-  const minConcurrency = asPositiveInteger(
-    rawConfig.export?.pdf?.concurrency?.min,
-    defaultConfig.export.pdf.concurrency.min,
-  );
-  const maxConcurrency = Math.max(
-    minConcurrency,
-    asPositiveInteger(
-      rawConfig.export?.pdf?.concurrency?.max,
-      defaultConfig.export.pdf.concurrency.max,
-    ),
-  );
-  const defaultConcurrency = asPositiveInteger(
-    rawConfig.export?.pdf?.concurrency?.default,
-    defaultConfig.export.pdf.concurrency.default,
-  );
-
-  return {
-    default: Math.max(minConcurrency, Math.min(maxConcurrency, defaultConcurrency)),
-    min: minConcurrency,
-    max: maxConcurrency,
-  };
-};
-
 export const loadProjectConfig = (cwd = process.cwd()) => {
-  const configPath = path.resolve(cwd, configFileName);
-  if (!fs.existsSync(configPath)) {
-    return defaultConfig;
-  }
-
-  const rawConfig = YAML.parse(fs.readFileSync(configPath, "utf8")) ?? {};
+  const configPath = path.resolve(cwd, "config.yml");
+  const pdf = fs.existsSync(configPath)
+    ? YAML.parse(fs.readFileSync(configPath, "utf8"))?.export?.pdf
+    : undefined;
   return {
     export: {
       pdf: {
-        distDir: asString(rawConfig.export?.pdf?.distDir, defaultConfig.export.pdf.distDir),
-        outDir: asString(rawConfig.export?.pdf?.outDir, defaultConfig.export.pdf.outDir),
-        concurrency: buildConcurrencyConfig(rawConfig),
-        include: asStringArray(rawConfig.export?.pdf?.include, defaultConfig.export.pdf.include),
-        exclude: asStringArray(rawConfig.export?.pdf?.exclude, defaultConfig.export.pdf.exclude),
-        page: {
-          format: asString(
-            rawConfig.export?.pdf?.page?.format,
-            defaultConfig.export.pdf.page.format,
-          ),
-          margin: {
-            top: asString(
-              rawConfig.export?.pdf?.page?.margin?.top,
-              defaultConfig.export.pdf.page.margin.top,
-            ),
-            bottom: asString(
-              rawConfig.export?.pdf?.page?.margin?.bottom,
-              defaultConfig.export.pdf.page.margin.bottom,
-            ),
-            left: asString(
-              rawConfig.export?.pdf?.page?.margin?.left,
-              defaultConfig.export.pdf.page.margin.left,
-            ),
-            right: asString(
-              rawConfig.export?.pdf?.page?.margin?.right,
-              defaultConfig.export.pdf.page.margin.right,
-            ),
-          },
-        },
-      },
-      changedPages: {
-        outDir: asString(
-          rawConfig.export?.changedPages?.outDir,
-          defaultConfig.export.changedPages.outDir,
-        ),
-        globalChange: asStringArray(
-          rawConfig.export?.changedPages?.globalChange,
-          defaultConfig.export.changedPages.globalChange,
-        ),
-        sourceExtensions: asStringArray(
-          rawConfig.export?.changedPages?.sourceExtensions,
-          defaultConfig.export.changedPages.sourceExtensions,
-        ),
+        include: patterns(pdf?.include, defaults.include),
+        exclude: [...patterns(pdf?.exclude, defaults.exclude), ...redirectPages],
       },
     },
   };
 };
 
-/** @param {string} filePath @param {typeof defaultConfig} config */
+/** @param {string} filePath @param {ReturnType<typeof loadProjectConfig>} config */
 export const shouldExportPdfPage = (filePath, config) =>
   isPdfExportable(filePath, config.export.pdf);
-
-/** @param {string} filePath @param {typeof defaultConfig} config */
-export const isTrackedSourcePage = (filePath, config) => {
-  const normalized = normalizeSourcePath(filePath);
-  return config.export.changedPages.sourceExtensions.some((extension) =>
-    normalized.toLowerCase().endsWith(extension.toLowerCase()),
-  );
-};
