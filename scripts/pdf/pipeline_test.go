@@ -169,4 +169,29 @@ func TestPublicationKeepsPriorVersionOnFailedUpload(t *testing.T) {
 	if err != nil || !confirmed || published.Book.Tag == "" || published.Book.SHA256 != m.Book.SHA256 {
 		t.Fatalf("invalid published edition: %v, %v", published.Book, err)
 	}
+	download := downloadPath(published.Book.Tag, bookName)
+	if published.Book.URL != cnbPublic+download {
+		t.Fatalf("published URL must use the public download host, got %q", published.Book.URL)
+	}
+
+	published.Book.URL = cnbAPI + download
+	if err := writeJSON(filepath.Join(retry, manifestName), published); err != nil {
+		t.Fatal(err)
+	}
+	callGit(retry, "add", manifestName)
+	callGit(retry, "-c", "user.name=Test", "-c", "user.email=test@example.test", "commit", "-m", "old download URL")
+	callGit(retry, "push", "--quiet", "origin", "main")
+	if err := writeJSON(filepath.Join(output, "result.json"), result{false, m.Edition}); err != nil {
+		t.Fatal(err)
+	}
+	if err := p.publish(ctx, output, retry); err != nil {
+		t.Fatal(err)
+	}
+	var repaired manifest
+	if err := json.Unmarshal([]byte(callGit(remote, "show", "main:"+manifestName)), &repaired); err != nil {
+		t.Fatal(err)
+	}
+	if repaired.Book.URL != cnbPublic+download || repaired.Source != published.Source || repaired.Book.SHA256 != published.Book.SHA256 {
+		t.Fatalf("unexpected migration result: %v", repaired)
+	}
 }

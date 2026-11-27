@@ -19,7 +19,9 @@ import (
 	"time"
 )
 
-const cnbAPI = "https://api.cnb.cool/Seeridia/Chemistry-Note-File/-"
+const cnbRepoPath = "/Seeridia/Chemistry-Note-File/-"
+const cnbAPI = "https://api.cnb.cool" + cnbRepoPath
+const cnbPublic = "https://cnb.cool" + cnbRepoPath
 
 var legacyFiles = map[string]string{
 	".cnb.yml":         "330f8a7e782c603d9989dff1d77f5e18e63258745c59460e39f302e9af25a1b4",
@@ -206,7 +208,7 @@ func (p publisher) publishBook(ctx context.Context, m *manifest, data []byte, ba
 	if _, err := p.call(ctx, http.MethodHead, download, nil, nil); err != nil {
 		return err
 	}
-	b.URL = p.api + download
+	b.URL = cnbPublic + download
 	return nil
 }
 
@@ -218,6 +220,13 @@ func (p publisher) publish(ctx context.Context, output, repo string) error {
 	if err := readJSON(filepath.Join(output, "result.json"), &outcome); err != nil {
 		return err
 	}
+	status, err := git(ctx, repo, "status", "--porcelain")
+	if err != nil {
+		return err
+	}
+	if status != "" {
+		return errors.New("the CNB checkout must start clean")
+	}
 	if !outcome.Changed {
 		m, err := loadManifest(repo)
 		if err != nil {
@@ -226,11 +235,16 @@ func (p publisher) publish(ctx context.Context, output, repo string) error {
 		if m.Book.Tag == "" {
 			return errors.New("the published manifest does not identify its release")
 		}
-		_, err = p.call(ctx, http.MethodHead, downloadPath(m.Book.Tag, m.Book.Name), nil, nil)
-		if err == nil {
-			fmt.Println("The current PDF edition is already published.")
+		download := downloadPath(m.Book.Tag, m.Book.Name)
+		if _, err := p.call(ctx, http.MethodHead, download, nil, nil); err != nil {
+			return err
 		}
-		return err
+		if m.Book.URL == cnbPublic+download {
+			fmt.Println("The current PDF edition is already published.")
+			return nil
+		}
+		m.Book.URL = cnbPublic + download
+		return p.pushManifest(ctx, repo, m, os.Getenv("GITHUB_SHA"), "Fix public PDF download URL")
 	}
 	m, err := loadManifest(output)
 	if err != nil {
@@ -241,13 +255,6 @@ func (p publisher) publish(ctx context.Context, output, repo string) error {
 	}
 	if err := p.checkSource(ctx, m.Source); err != nil {
 		return err
-	}
-	status, err := git(ctx, repo, "status", "--porcelain")
-	if err != nil {
-		return err
-	}
-	if status != "" {
-		return errors.New("the CNB checkout must start clean")
 	}
 	base, err := git(ctx, repo, "rev-parse", "HEAD")
 	if err != nil {
@@ -266,10 +273,15 @@ func (p publisher) publish(ctx context.Context, output, repo string) error {
 	if err := p.publishBook(ctx, &m, data, base); err != nil {
 		return err
 	}
+	fmt.Println("Verified the CNB Release attachment.")
+	return p.pushManifest(ctx, repo, m, m.Source, "Publish PDFs from "+m.Source)
+}
+
+func (p publisher) pushManifest(ctx context.Context, repo string, m manifest, source, message string) error {
 	if err := writeJSON(filepath.Join(repo, manifestName), m); err != nil {
 		return err
 	}
-	status, err = git(ctx, repo, "status", "--porcelain")
+	status, err := git(ctx, repo, "status", "--porcelain")
 	if err != nil || status == "" {
 		return err
 	}
@@ -278,12 +290,13 @@ func (p publisher) publish(ctx context.Context, output, repo string) error {
 	}
 	if _, err := git(ctx, repo, "-c", "user.name=github-actions[bot]",
 		"-c", "user.email=41898282+github-actions[bot]@users.noreply.github.com",
-		"commit", "-m", "Publish PDFs from "+m.Source); err != nil {
+		"commit", "-m", message); err != nil {
 		return err
 	}
-	if err := p.checkSource(ctx, m.Source); err != nil {
+	if err := p.checkSource(ctx, source); err != nil {
 		return err
 	}
+	fmt.Println("Pushing the PDF publication to CNB.")
 	auth := base64.StdEncoding.EncodeToString([]byte("cnb:" + p.token))
 	cmd := exec.CommandContext(ctx, "git", "push", "origin", "HEAD:refs/heads/main")
 	cmd.Dir = repo

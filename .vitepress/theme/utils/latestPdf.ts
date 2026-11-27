@@ -17,12 +17,12 @@ async function fetchLatestPdfUrl(): Promise<string> {
       const manifest = await response.json();
       const url = new URL(manifest.book.url);
       if (
-        url.origin === "https://api.cnb.cool" &&
+        (url.origin === "https://cnb.cool" || url.origin === "https://api.cnb.cool") &&
         /^\/Seeridia\/Chemistry-Note-File\/-\/releases\/download\/pdf-[a-f0-9]{16}-[a-f0-9]{16}\/Anyayay_Chemistry_Note\.pdf$/.test(
           url.pathname,
         )
       ) {
-        return url.href;
+        return new URL(url.pathname, "https://cnb.cool").href;
       }
     }
   } catch {
