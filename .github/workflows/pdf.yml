@@ -38,7 +38,7 @@ jobs:
       group: chemistry-note-pdf
       cancel-in-progress: false
     env:
-      PUBLISH_PDF: ${{ (inputs.publish || (github.event_name == 'push' && vars.PDF_PUBLISH_ENABLED == 'true')) && github.ref == 'refs/heads/master' }}
+      PUBLISH_PDF: ${{ vars.PDF_PUBLISH_ENABLED == 'true' && (inputs.publish || github.event_name == 'push') && github.ref == 'refs/heads/master' }}
       FORCE_PDF: ${{ inputs.force }}
     steps:
       - uses: actions/checkout@v7

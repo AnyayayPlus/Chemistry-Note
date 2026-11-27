@@ -163,7 +163,15 @@ func TestPublicationKeepsPriorVersionOnFailedUpload(t *testing.T) {
 		}
 	}))
 	defer server.Close()
-	p := publisher{server.URL, "simulation", server.Client(), func(context.Context, string) error { return nil }}
+	p := publisher{
+		api: server.URL, token: "simulation", source: m.Source, client: server.Client(),
+		checkSource: func(_ context.Context, commit string) error {
+			if commit != m.Source {
+				t.Errorf("unexpected source commit %q", commit)
+			}
+			return nil
+		},
+	}
 	if err := p.publish(ctx, output, writer); err == nil || !strings.Contains(err.Error(), "503") {
 		t.Fatalf("expected upload failure, got %v", err)
 	}
@@ -226,5 +234,50 @@ func TestPublicationKeepsPriorVersionOnFailedUpload(t *testing.T) {
 	}
 	if promotions != 2 {
 		t.Fatal("unchanged Latest was promoted again")
+	}
+}
+
+func TestPublicationSourceRecognizesOnlyProductionRefs(t *testing.T) {
+	commit := strings.Repeat("a", 40)
+	githubEnv := map[string]string{
+		"GITHUB_REPOSITORY": githubSourceRepo, "GITHUB_REF_NAME": "master", "GITHUB_SHA": commit,
+	}
+	cnbEnv := map[string]string{
+		"CNB": "true", "CNB_REPO_SLUG": cnbSourceRepo, "CNB_BRANCH": "master", "CNB_EVENT": "push", "CNB_COMMIT": commit,
+	}
+	for _, tc := range []struct {
+		name  string
+		env   map[string]string
+		key   string
+		value string
+		cnb   bool
+	}{
+		{name: "GitHub master", env: githubEnv},
+		{name: "CNB master", env: cnbEnv, cnb: true},
+		{name: "GitHub preview", env: githubEnv, key: "GITHUB_REF_NAME", value: "preview"},
+		{name: "CNB preview branch", env: cnbEnv, key: "CNB_BRANCH", value: "pdf-preview/migration"},
+		{name: "CNB manual preview", env: cnbEnv, key: "CNB_EVENT", value: "web_trigger_pdf_preview"},
+		{name: "CNB artifact repository", env: cnbEnv, key: "CNB_REPO_SLUG", value: "Seeridia/Chemistry-Note-File"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			source, err := readPublicationSource(func(key string) string {
+				if key == tc.key {
+					return tc.value
+				}
+				return tc.env[key]
+			})
+			if tc.key != "" {
+				if err == nil {
+					t.Fatal("expected publication from this ref to be rejected")
+				}
+				return
+			}
+			if err != nil || source.commit != commit || source.cnb != tc.cnb {
+				t.Fatalf("unexpected source: %+v, %v", source, err)
+			}
+			if err := source.check(context.Background(), strings.Repeat("b", 40)); err == nil {
+				t.Fatal("expected a mismatched source commit to be rejected")
+			}
+		})
 	}
 }

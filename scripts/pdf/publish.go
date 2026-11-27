@@ -19,6 +19,8 @@ import (
 	"time"
 )
 
+const githubSourceRepo = "AnyayayPlus/Chemistry-Note"
+const cnbSourceRepo = "Seeridia/Chemistry-Note"
 const cnbRepoPath = "/Seeridia/Chemistry-Note-File/-"
 const cnbAPI = "https://api.cnb.cool" + cnbRepoPath
 const cnbPublic = "https://cnb.cool" + cnbRepoPath
@@ -30,9 +32,14 @@ var legacyFiles = map[string]string{
 }
 
 type publisher struct {
-	api, token  string
-	client      *http.Client
-	checkSource func(context.Context, string) error
+	api, token, source string
+	client             *http.Client
+	checkSource        func(context.Context, string) error
+}
+
+type publicationSource struct {
+	commit string
+	cnb    bool
 }
 
 type release struct {
@@ -47,19 +54,49 @@ type release struct {
 }
 
 func publish(ctx context.Context, output, repo, token string) error {
-	p := publisher{cnbAPI, token, &http.Client{
-		Timeout:       150 * time.Second,
-		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
-	}, ensureCurrentSource}
+	source, err := readPublicationSource(os.Getenv)
+	if err != nil {
+		return err
+	}
+	p := publisher{
+		api: cnbAPI, token: token, source: source.commit, checkSource: source.check,
+		client: &http.Client{
+			Timeout:       150 * time.Second,
+			CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
+		},
+	}
 	return p.publish(ctx, output, repo)
 }
 
-func ensureCurrentSource(ctx context.Context, expected string) error {
-	repo, branch := os.Getenv("GITHUB_REPOSITORY"), os.Getenv("GITHUB_REF_NAME")
-	if repo != "AnyayayPlus/Chemistry-Note" || branch != "master" {
-		return errors.New("cloud publication requires the production GitHub branch")
+func readPublicationSource(env func(string) string) (publicationSource, error) {
+	if env("CNB") == "true" {
+		if !strings.EqualFold(env("CNB_REPO_SLUG"), cnbSourceRepo) || env("CNB_BRANCH") != "master" || env("CNB_EVENT") != "push" {
+			return publicationSource{}, errors.New("CNB publication requires a push to the production source mirror")
+		}
+		return publicationSource{commit: env("CNB_COMMIT"), cnb: true}, nil
 	}
-	latest, err := git(ctx, "", "ls-remote", "https://github.com/"+repo+".git", "refs/heads/"+branch)
+	if env("GITHUB_REPOSITORY") != githubSourceRepo || env("GITHUB_REF_NAME") != "master" {
+		return publicationSource{}, errors.New("cloud publication requires the production GitHub branch")
+	}
+	return publicationSource{commit: env("GITHUB_SHA")}, nil
+}
+
+func (s publicationSource) check(ctx context.Context, expected string) error {
+	if len(s.commit) != 40 || s.commit != expected {
+		return errors.New("PDF source does not match the triggering commit")
+	}
+	if s.cnb {
+		if err := checkSourceHead(ctx, "https://cnb.cool/"+cnbSourceRepo+".git", expected); err != nil {
+			return fmt.Errorf("check CNB mirror: %w", err)
+		}
+	}
+	return checkSourceHead(ctx, "https://github.com/"+githubSourceRepo+".git", expected)
+}
+
+func checkSourceHead(ctx context.Context, remote, expected string) error {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	latest, err := git(ctx, "", "ls-remote", remote, "refs/heads/master")
 	if err != nil {
 		return err
 	}
@@ -183,9 +220,11 @@ func (p publisher) publishBook(ctx context.Context, m *manifest, data []byte, ba
 		if err != nil {
 			return err
 		}
+		uploadStarted := time.Now()
 		if err := p.put(ctx, endpoints.Upload, data); err != nil {
 			return err
 		}
+		fmt.Printf("Uploaded the CNB Release attachment in %s.\n", time.Since(uploadStarted).Round(time.Millisecond))
 		verify, err := url.Parse(endpoints.Verify)
 		if err != nil || !strings.Contains(verify.EscapedPath(), "/asset-upload-confirmation/") {
 			return errors.New("invalid CNB attachment confirmation URL")
@@ -195,9 +234,11 @@ func (p publisher) publishBook(ctx context.Context, m *manifest, data []byte, ba
 			return errors.New("invalid CNB attachment confirmation path")
 		}
 		confirmation := strings.Join(parts[len(parts)-2:], "/")
+		confirmationStarted := time.Now()
 		if _, err := p.call(ctx, http.MethodPost, path+"-confirmation/"+confirmation+"?ttl=0", nil, nil); err != nil {
 			return err
 		}
+		fmt.Printf("Confirmed the CNB Release attachment in %s.\n", time.Since(confirmationStarted).Round(time.Millisecond))
 		if _, err := p.call(ctx, http.MethodGet, releasePath, nil, &r); err != nil {
 			return err
 		}
@@ -267,7 +308,7 @@ func (p publisher) publish(ctx context.Context, output, repo string) error {
 		if _, err := p.call(ctx, http.MethodHead, download, nil, nil); err != nil {
 			return err
 		}
-		source := os.Getenv("GITHUB_SHA")
+		source := p.source
 		if m.Book.URL != cnbPublic+download {
 			m.Book.URL = cnbPublic + download
 			if err := p.pushManifest(ctx, repo, m, source, "Fix public PDF download URL"); err != nil {
@@ -340,9 +381,11 @@ func (p publisher) pushManifest(ctx context.Context, repo string, m manifest, so
 	cmd.Env = append(os.Environ(), "GIT_CONFIG_COUNT=1", "GIT_CONFIG_KEY_0=http.https://cnb.cool/.extraHeader",
 		"GIT_CONFIG_VALUE_0=Authorization: Basic "+auth, "GIT_TERMINAL_PROMPT=0")
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	pushStarted := time.Now()
 	if err := cmd.Run(); err != nil {
 		return err
 	}
+	fmt.Printf("Pushed the PDF publication to CNB in %s.\n", time.Since(pushStarted).Round(time.Millisecond))
 	fmt.Printf("Published %s\n", m.Book.URL)
 	return nil
 }

@@ -32,4 +32,4 @@ jobs:
           auth_header=$(printf 'cnb:%s' "$CNB_TOKEN" | base64 | tr -d '\n')
           git remote add cnb https://cnb.cool/Seeridia/Chemistry-Note.git
           git -c http.extraHeader="Authorization: Basic $auth_header" \
-            push --force cnb "HEAD:refs/heads/${GITHUB_REF_NAME}" --tags
+            push cnb "HEAD:refs/heads/${GITHUB_REF_NAME}" --tags

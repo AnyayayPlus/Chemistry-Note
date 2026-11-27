@@ -1,0 +1,48 @@
+master:
+  push:
+    - &pdf
+      name: Chemistry Note PDFs
+      runner:
+        tags: cnb:arch:amd64
+      lock:
+        key: chemistry-note-pdf
+        wait: true
+      docker:
+        build:
+          dockerfile: ./scripts/pdf/Dockerfile
+        volumes:
+          - /root/.cache/go-build
+          - /root/go/pkg/mod
+          - /root/.local/share/pnpm/store
+          - ./output/pdf-bodies
+      env:
+        PDF_PUBLISH_ENABLED: "true"
+      stages:
+        - name: Check source and build the site
+          script: |
+            set -eu
+            test "$(git rev-parse HEAD)" = "$CNB_COMMIT"
+            pnpm install --frozen-lockfile
+            test "$(node -p 'require("playwright/package.json").version')" = "$PDF_PLAYWRIGHT_VERSION"
+            pnpm run check
+            pnpm run docs:build
+
+        - name: Build and verify the PDFs
+          script: |
+            set -eu
+            mkdir -p output
+            go -C scripts/pdf test ./...
+            go -C scripts/pdf build -o "$PWD/output/chemistry-pdf" .
+            git clone --depth 1 --branch main https://cnb.cool/Seeridia/Chemistry-Note-File.git output/cnb-pdf
+            output/chemistry-pdf build --previous output/cnb-pdf
+
+        - name: Publish to CNB
+          if: '[ "$CNB_BRANCH" = master ] && [ "$CNB_EVENT" = push ] && [ "$PDF_PUBLISH_ENABLED" = true ]'
+          script: output/chemistry-pdf publish output/pdf output/cnb-pdf
+
+  web_trigger_pdf_preview:
+    - *pdf
+
+"pdf-preview/*":
+  push:
+    - *pdf
