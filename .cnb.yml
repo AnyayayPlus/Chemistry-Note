@@ -34,7 +34,7 @@ master:
             go -C scripts/pdf test ./...
             go -C scripts/pdf build -o "$PWD/output/chemistry-pdf" .
             git clone --depth 1 --branch main https://cnb.cool/Seeridia/Chemistry-Note-File.git output/cnb-pdf
-            output/chemistry-pdf build --previous output/cnb-pdf
+            output/chemistry-pdf build --previous output/cnb-pdf --font-source "$PDF_FONT_SOURCE"
 
         - name: Publish to CNB
           if: '[ "$CNB_BRANCH" = master ] && [ "$CNB_EVENT" = push ] && [ "$PDF_PUBLISH_ENABLED" = true ]'
