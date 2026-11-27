@@ -100,6 +100,8 @@ func TestPublicationKeepsPriorVersionOnFailedUpload(t *testing.T) {
 
 	var server *httptest.Server
 	fail, created, confirmed := true, false, false
+	latestTag := "legacy"
+	promotions := 0
 	var uploaded []byte
 	server = httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		respond := func(v any) { _ = json.NewEncoder(w).Encode(v) }
@@ -121,6 +123,21 @@ func TestPublicationKeepsPriorVersionOnFailedUpload(t *testing.T) {
 		case r.URL.Path == "/releases" && r.Method == http.MethodPost:
 			created = true
 			respond(map[string]string{"id": "1"})
+		case r.URL.Path == "/releases/latest" && r.Method == http.MethodGet:
+			respond(map[string]string{"tag_name": latestTag})
+		case r.URL.Path == "/releases/1" && r.Method == http.MethodPatch:
+			var form map[string]string
+			err := json.NewDecoder(r.Body).Decode(&form)
+			publishedJSON, readErr := git(ctx, remote, "show", "main:"+manifestName)
+			var current manifest
+			parseErr := json.Unmarshal([]byte(publishedJSON), &current)
+			if err != nil || form["make_latest"] != "true" || !confirmed || readErr != nil || parseErr != nil || current.Book.SHA256 != m.Book.SHA256 || current.Book.Tag == "" {
+				t.Error("Latest must point to the verified edition after its manifest is published")
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			latestTag = current.Book.Tag
+			promotions++
 		case strings.HasPrefix(r.URL.Path, "/releases/tags/"):
 			if !created {
 				w.WriteHeader(http.StatusNotFound)
@@ -156,6 +173,9 @@ func TestPublicationKeepsPriorVersionOnFailedUpload(t *testing.T) {
 	if got := callGit(remote, "show", "main:obsolete.pdf"); got != "old" {
 		t.Fatal("upload failure invalidated the previous PDF")
 	}
+	if latestTag != "legacy" || promotions != 0 {
+		t.Fatal("upload failure changed Latest")
+	}
 	fail = false
 	retry := filepath.Join(root, "retry")
 	callGit(root, "clone", "--quiet", remote, retry)
@@ -173,6 +193,9 @@ func TestPublicationKeepsPriorVersionOnFailedUpload(t *testing.T) {
 	if published.Book.URL != cnbPublic+download {
 		t.Fatalf("published URL must use the public download host, got %q", published.Book.URL)
 	}
+	if latestTag != published.Book.Tag || promotions != 1 {
+		t.Fatal("newly published edition was not marked Latest")
+	}
 
 	published.Book.URL = cnbAPI + download
 	if err := writeJSON(filepath.Join(retry, manifestName), published); err != nil {
@@ -184,6 +207,7 @@ func TestPublicationKeepsPriorVersionOnFailedUpload(t *testing.T) {
 	if err := writeJSON(filepath.Join(output, "result.json"), result{false, m.Edition}); err != nil {
 		t.Fatal(err)
 	}
+	latestTag = "legacy"
 	if err := p.publish(ctx, output, retry); err != nil {
 		t.Fatal(err)
 	}
@@ -193,5 +217,14 @@ func TestPublicationKeepsPriorVersionOnFailedUpload(t *testing.T) {
 	}
 	if repaired.Book.URL != cnbPublic+download || repaired.Source != published.Source || repaired.Book.SHA256 != published.Book.SHA256 {
 		t.Fatalf("unexpected migration result: %v", repaired)
+	}
+	if latestTag != published.Book.Tag || promotions != 2 {
+		t.Fatal("unchanged edition did not repair Latest")
+	}
+	if err := p.publish(ctx, output, retry); err != nil {
+		t.Fatal(err)
+	}
+	if promotions != 2 {
+		t.Fatal("unchanged Latest was promoted again")
 	}
 }

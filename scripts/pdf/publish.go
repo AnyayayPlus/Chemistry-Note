@@ -37,6 +37,7 @@ type publisher struct {
 
 type release struct {
 	ID     string `json:"id"`
+	Tag    string `json:"tag_name"`
 	Assets []struct {
 		Name      string `json:"name"`
 		Size      int64  `json:"size"`
@@ -212,6 +213,33 @@ func (p publisher) publishBook(ctx context.Context, m *manifest, data []byte, ba
 	return nil
 }
 
+func (p publisher) markLatest(ctx context.Context, tag, source string) error {
+	var latest release
+	status, err := p.call(ctx, http.MethodGet, "/releases/latest", nil, &latest)
+	if err != nil && status != http.StatusNotFound {
+		return err
+	}
+	if latest.Tag == tag {
+		return nil
+	}
+	var target release
+	if _, err := p.call(ctx, http.MethodGet, "/releases/tags/"+url.PathEscape(tag), nil, &target); err != nil {
+		return err
+	}
+	if target.ID == "" {
+		return errors.New("CNB returned a release without an ID")
+	}
+	if err := p.checkSource(ctx, source); err != nil {
+		return err
+	}
+	if _, err := p.call(ctx, http.MethodPatch, "/releases/"+url.PathEscape(target.ID),
+		map[string]string{"make_latest": "true"}, nil); err != nil {
+		return err
+	}
+	fmt.Printf("Marked CNB Release %s as Latest.\n", tag)
+	return nil
+}
+
 func (p publisher) publish(ctx context.Context, output, repo string) error {
 	if p.token == "" {
 		return errors.New("CNB_TOKEN is required for publication")
@@ -239,12 +267,18 @@ func (p publisher) publish(ctx context.Context, output, repo string) error {
 		if _, err := p.call(ctx, http.MethodHead, download, nil, nil); err != nil {
 			return err
 		}
-		if m.Book.URL == cnbPublic+download {
-			fmt.Println("The current PDF edition is already published.")
-			return nil
+		source := os.Getenv("GITHUB_SHA")
+		if m.Book.URL != cnbPublic+download {
+			m.Book.URL = cnbPublic + download
+			if err := p.pushManifest(ctx, repo, m, source, "Fix public PDF download URL"); err != nil {
+				return err
+			}
 		}
-		m.Book.URL = cnbPublic + download
-		return p.pushManifest(ctx, repo, m, os.Getenv("GITHUB_SHA"), "Fix public PDF download URL")
+		if err := p.markLatest(ctx, m.Book.Tag, source); err != nil {
+			return err
+		}
+		fmt.Println("The current PDF edition is already published.")
+		return nil
 	}
 	m, err := loadManifest(output)
 	if err != nil {
@@ -274,7 +308,10 @@ func (p publisher) publish(ctx context.Context, output, repo string) error {
 		return err
 	}
 	fmt.Println("Verified the CNB Release attachment.")
-	return p.pushManifest(ctx, repo, m, m.Source, "Publish PDFs from "+m.Source)
+	if err := p.pushManifest(ctx, repo, m, m.Source, "Publish PDFs from "+m.Source); err != nil {
+		return err
+	}
+	return p.markLatest(ctx, m.Book.Tag, m.Source)
 }
 
 func (p publisher) pushManifest(ctx context.Context, repo string, m manifest, source, message string) error {
