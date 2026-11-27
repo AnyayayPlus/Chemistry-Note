@@ -1,10 +1,6 @@
 name: Build and Publish PDFs
 
 on:
-  workflow_call:
-    secrets:
-      CNB_TOKEN:
-        required: true
   workflow_dispatch:
     inputs:
       publish:
@@ -21,24 +17,20 @@ permissions:
 
 jobs:
   preview-site:
-    if: github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/check.yml
     with:
       upload-build: true
 
   pdf:
     needs: preview-site
-    if: >-
-      !cancelled() &&
-      (needs.preview-site.result == 'success' || needs.preview-site.result == 'skipped') &&
-      github.repository_owner == 'AnyayayPlus'
+    if: github.repository_owner == 'AnyayayPlus'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     concurrency:
       group: chemistry-note-pdf
       cancel-in-progress: false
     env:
-      PUBLISH_PDF: ${{ vars.PDF_PUBLISH_ENABLED == 'true' && (inputs.publish || github.event_name == 'push') && github.ref == 'refs/heads/master' }}
+      PUBLISH_PDF: ${{ vars.PDF_PUBLISH_ENABLED == 'true' && inputs.publish && github.ref == 'refs/heads/master' }}
       FORCE_PDF: ${{ inputs.force }}
     steps:
       - uses: actions/checkout@v7
