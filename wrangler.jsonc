@@ -1,0 +1,10 @@
+{
+  "name": "chemistry-note",
+  "main": "workers/preview.mjs",
+  "compatibility_date": "2026-11-28",
+  "assets": {
+    "directory": "./.vitepress/dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/editor/*"],
+  },
+}

@@ -9,7 +9,7 @@ import type { SiteThemeConfig } from "./shared/theme.ts";
 import { loadProjectConfig } from "../scripts/project-config.js";
 import { configureImageOptimization } from "./markdown/imageOptimization.ts";
 import { htmlToPdfPath, isPdfExportable } from "./shared/page.ts";
-import { GITHUB_URL, SITE_ORIGIN as siteUrl } from "./shared/site.ts";
+import { GITHUB_REPOSITORY, GITHUB_URL, SITE_ORIGIN as siteUrl } from "./shared/site.ts";
 import { CONTENT_EXCLUDES, scanContent } from "./siteData/content.ts";
 import { contentPlugin } from "./siteData/contentPlugin.ts";
 import { buildNavItems } from "./siteData/nav.ts";
@@ -163,4 +163,8 @@ export default withInlineEditor(config, {
   repoRoot: contentRoot,
   include: ["[0-9][0-9] */!(index).md"],
   revision: process.env.EDITOR_CONTENT_REVISION,
+  staticPreview:
+    process.env.WORKERS_CI === "1"
+      ? { repository: GITHUB_REPOSITORY, branch: process.env.WORKERS_CI_BRANCH || "preview" }
+      : undefined,
 });

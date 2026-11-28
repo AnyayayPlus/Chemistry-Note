@@ -17,5 +17,6 @@ pdf-repo/
 
 .vite-hooks/_/
 .vite/
+.wrangler/
 
 .idea

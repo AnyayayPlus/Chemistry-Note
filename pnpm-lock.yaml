@@ -191,8 +191,8 @@ importers:
         specifier: ^3.11.0
         version: 3.11.0(vue@3.5.44(typescript@6.0.3))
       vitepress-inline-editor:
-        specifier: file:.vitepress/vendor/vitepress-inline-editor-0.1.0-dev.2.tgz
-        version: file:.vitepress/vendor/vitepress-inline-editor-0.1.0-dev.2.tgz(@codemirror/language@6.13.1)(prosemirror-model@1.25.13)(prosemirror-state@1.4.4)(prosemirror-view@1.44.0)(typescript@6.0.3)(vitepress@2.0.0-alpha.21(@types/node@24.19.2)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.13)(axios@1.20.0(debug@4.4.3))(markdown-it-mathjax3@4.3.2)(postcss@8.5.31)(typescript@6.0.3)(vue-tsc@3.3.13(typescript@6.0.3))(yaml@2.9.1))(vue@3.5.44(typescript@6.0.3))
+        specifier: file:.vitepress/vendor/vitepress-inline-editor-0.1.0-dev.3.tgz
+        version: file:.vitepress/vendor/vitepress-inline-editor-0.1.0-dev.3.tgz(@codemirror/language@6.13.1)(prosemirror-model@1.25.13)(prosemirror-state@1.4.4)(prosemirror-view@1.44.0)(typescript@6.0.3)(vitepress@2.0.0-alpha.21(@types/node@24.19.2)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.13)(axios@1.20.0(debug@4.4.3))(markdown-it-mathjax3@4.3.2)(postcss@8.5.31)(typescript@6.0.3)(vue-tsc@3.3.13(typescript@6.0.3))(yaml@2.9.1))(vue@3.5.44(typescript@6.0.3))
     devDependencies:
       '@types/blueimp-md5':
         specifier: ^2.18.2
@@ -2434,9 +2434,9 @@ packages:
       playwright:
         optional: true
 
-  vitepress-inline-editor@file:.vitepress/vendor/vitepress-inline-editor-0.1.0-dev.2.tgz:
-    resolution: {integrity: sha512-4cJMXFLnt9n2YiEGh3gEWVC7XT0suzIVqiYc4K4OsdIYmpi1GCrEysG1nLwNbZUUPDjTgQgbN5nB74QjtehGXQ==, tarball: file:.vitepress/vendor/vitepress-inline-editor-0.1.0-dev.2.tgz}
-    version: 0.1.0-dev.2
+  vitepress-inline-editor@file:.vitepress/vendor/vitepress-inline-editor-0.1.0-dev.3.tgz:
+    resolution: {integrity: sha512-v7g+jQEmxeYw+yQ7xvaqV3k46IlINkslI67HuQBB8GmD809mGL6ftsZRIlTaReSZ521hw0nm+IJoMs1X6dlOQQ==, tarball: file:.vitepress/vendor/vitepress-inline-editor-0.1.0-dev.3.tgz}
+    version: 0.1.0-dev.3
     engines: {node: '>=24'}
     hasBin: true
     peerDependencies:
@@ -5357,7 +5357,7 @@ snapshots:
       - vue-tsc
       - yaml
 
-  vitepress-inline-editor@file:.vitepress/vendor/vitepress-inline-editor-0.1.0-dev.2.tgz(@codemirror/language@6.13.1)(prosemirror-model@1.25.13)(prosemirror-state@1.4.4)(prosemirror-view@1.44.0)(typescript@6.0.3)(vitepress@2.0.0-alpha.21(@types/node@24.19.2)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.13)(axios@1.20.0(debug@4.4.3))(markdown-it-mathjax3@4.3.2)(postcss@8.5.31)(typescript@6.0.3)(vue-tsc@3.3.13(typescript@6.0.3))(yaml@2.9.1))(vue@3.5.44(typescript@6.0.3)):
+  vitepress-inline-editor@file:.vitepress/vendor/vitepress-inline-editor-0.1.0-dev.3.tgz(@codemirror/language@6.13.1)(prosemirror-model@1.25.13)(prosemirror-state@1.4.4)(prosemirror-view@1.44.0)(typescript@6.0.3)(vitepress@2.0.0-alpha.21(@types/node@24.19.2)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.13)(axios@1.20.0(debug@4.4.3))(markdown-it-mathjax3@4.3.2)(postcss@8.5.31)(typescript@6.0.3)(vue-tsc@3.3.13(typescript@6.0.3))(yaml@2.9.1))(vue@3.5.44(typescript@6.0.3)):
     dependencies:
       '@codemirror/commands': 6.11.2
       '@codemirror/lang-markdown': 6.5.2
