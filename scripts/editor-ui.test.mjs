@@ -157,3 +157,48 @@ await test("the settings menu opts in locally and the article only shows its own
   await loaded;
   assert.equal(await visibleCredits.count(), 0);
 });
+
+await test("readers on the short domain opt in on the same article on the submission site", async (t) => {
+  const local = new URL(process.env.EDITOR_TEST_ORIGIN || "http://127.0.0.1:5173");
+  const main = "https://chemistry-note.seeridia.top";
+  const mirror = "https://cn.seeridia.top";
+  const article = new URL("08 化学反应能量与速率/05 电解池.html?from=notes#section", mirror);
+  const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL });
+  t.after(() => browser.close());
+  const context = await browser.newContext();
+  let submissionRequests = 0;
+  await context.addInitScript((alias) => {
+    if (window.location.origin === alias)
+      localStorage.setItem("cc-site-settings", JSON.stringify({ enableEditor: true }));
+  }, mirror);
+  await context.route("**/*", async (route) => {
+    const url = new URL(route.request().url());
+    if (![main, mirror].includes(url.origin)) return route.abort();
+    if (url.pathname.startsWith("/api/account/") || url.pathname.startsWith("/api/editor/")) {
+      submissionRequests++;
+      return route.abort();
+    }
+    if (url.pathname.startsWith("/api/")) return route.fulfill({ json: { contributors: [] } });
+    url.protocol = local.protocol;
+    url.host = local.host;
+    const response = await route.fetch({ url: url.href });
+    return route.fulfill({ response });
+  });
+  const page = await context.newPage();
+  await page.goto(article.href);
+  const edit = page.getByRole("button", { name: "编辑此页", exact: true });
+  const dialog = page.getByRole("dialog");
+  await page.getByRole("button", { name: "打开显示配置" }).click();
+  assert.equal(await edit.count(), 0);
+  await dialog.getByText("站内编辑", { exact: true }).click();
+  const link = dialog.getByRole("link", { name: "在主站设置站内编辑" });
+  await link.click();
+  const toggle = dialog.getByRole("checkbox", { name: "显示「编辑此页」按钮" });
+  await toggle.waitFor();
+  assert.equal(page.url(), main + article.pathname + article.search + article.hash);
+  assert.equal(await toggle.isChecked(), false);
+  await toggle.check();
+  await dialog.getByRole("button", { name: "完成" }).click();
+  await edit.waitFor();
+  assert.equal(submissionRequests, 0);
+});

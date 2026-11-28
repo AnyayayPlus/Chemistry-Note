@@ -9,7 +9,7 @@ import type { SiteThemeConfig } from "./shared/theme.ts";
 import { loadProjectConfig } from "../scripts/project-config.js";
 import { configureImageOptimization } from "./markdown/imageOptimization.ts";
 import { htmlToPdfPath, isPdfExportable } from "./shared/page.ts";
-import { GITHUB_URL } from "./shared/site.ts";
+import { GITHUB_URL, SITE_ORIGIN as siteUrl } from "./shared/site.ts";
 import { CONTENT_EXCLUDES, scanContent } from "./siteData/content.ts";
 import { contentPlugin } from "./siteData/contentPlugin.ts";
 import { buildNavItems } from "./siteData/nav.ts";
@@ -19,7 +19,6 @@ import mapShortUrl from "./theme/components/shortUrl/mapShortUrl.ts";
 
 const configDir = path.dirname(fileURLToPath(import.meta.url));
 const contentRoot = path.resolve(configDir, "..");
-const siteUrl = "https://chemistry-note.seeridia.top";
 const siteName = "Anyayay's Chemistry Note";
 const defaultDescription =
   "免费高中化学笔记，覆盖原子结构、有机化学、元素化合物、化学实验等核心板块，适合课堂学习与高考复习。";

@@ -7,6 +7,7 @@ import DefaultTheme from "vitepress/theme";
 import { computed, nextTick, onMounted, onBeforeUnmount, watch } from "vue";
 
 import { getPageKind } from "../shared/page";
+import { SHORT_SITE_ORIGIN } from "../shared/site";
 import { communityAccount } from "./communityAccount";
 import CCArticleContributors from "./components/CCArticleContributors.vue";
 import Breadcrumb from "./components/CCBreadCrumb.vue";
@@ -21,6 +22,7 @@ const { Layout } = DefaultTheme;
 const route = useRoute();
 const { page } = useData();
 const { settings } = useSiteSettings();
+const canEditHere = typeof window !== "undefined" && window.location.origin !== SHORT_SITE_ORIGIN;
 const editorContributors = useEditorContributors(
   computed(() => {
     const path = page.value.filePath || page.value.relativePath;
@@ -121,7 +123,7 @@ watch(
     <template #doc-before>
       <Breadcrumb />
       <ClientOnly
-        ><InlineEditor v-if="settings.enableEditor" :account="communityAccount"
+        ><InlineEditor v-if="settings.enableEditor && canEditHere" :account="communityAccount"
       /></ClientOnly>
     </template>
 

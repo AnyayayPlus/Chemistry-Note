@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, shallowRef, useTemplateRef } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, shallowRef, useTemplateRef } from "vue";
 
 import type {
   ContributorsDisplay,
@@ -7,22 +7,42 @@ import type {
   SiteFontFamily,
 } from "../composables/useSiteSettings";
 
+import { SHORT_SITE_ORIGIN, SITE_ORIGIN } from "../../shared/site";
 import { useSiteSettings } from "../composables/useSiteSettings";
 
-defineProps<{
+const props = defineProps<{
   screenMenu?: boolean;
 }>();
 
 const { settings, updateSiteSettings, resetSiteSettings } = useSiteSettings();
 const isOpen = shallowRef(false);
 const dialogRef = useTemplateRef<HTMLDivElement>("dialog");
+const editorDetails = useTemplateRef<HTMLDetailsElement>("editorDetails");
+const mainSiteSettingsUrl = shallowRef("");
+const editorSettingsParam = "editor-settings";
 
 const openDialog = async () => {
+  if (window.location.origin === SHORT_SITE_ORIGIN) {
+    const target = new URL(window.location.href);
+    target.host = new URL(SITE_ORIGIN).host;
+    target.searchParams.set(editorSettingsParam, "1");
+    mainSiteSettingsUrl.value = target.href;
+  }
   isOpen.value = true;
   document.body.classList.add("cc-settings-modal-open");
   await nextTick();
   dialogRef.value?.focus();
 };
+
+onMounted(async () => {
+  if (props.screenMenu || window.location.origin !== SITE_ORIGIN) return;
+  const url = new URL(window.location.href);
+  if (url.searchParams.get(editorSettingsParam) !== "1") return;
+  url.searchParams.delete(editorSettingsParam);
+  window.history.replaceState(window.history.state, "", url);
+  await openDialog();
+  if (editorDetails.value) editorDetails.value.open = true;
+});
 
 const closeDialog = () => {
   isOpen.value = false;
@@ -132,9 +152,12 @@ onBeforeUnmount(() => {
         </header>
 
         <div class="cc-settings-dialog__body">
-          <details class="cc-settings-editor">
+          <details ref="editorDetails" class="cc-settings-editor">
             <summary>站内编辑</summary>
-            <label class="cc-settings-option">
+            <a v-if="mainSiteSettingsUrl" :href="mainSiteSettingsUrl" class="cc-settings-option">
+              在主站设置站内编辑
+            </a>
+            <label v-else class="cc-settings-option">
               <span class="cc-settings-option__text">显示「编辑此页」按钮</span>
               <input
                 class="cc-settings-option__control"
@@ -337,6 +360,10 @@ onBeforeUnmount(() => {
 }
 .cc-settings-editor .cc-settings-option {
   margin: 6px 0 0 16px;
+}
+.cc-settings-editor a {
+  color: var(--vp-c-brand-1);
+  text-decoration: underline;
 }
 
 .cc-settings-option__text,
