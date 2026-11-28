@@ -39,7 +39,7 @@ pnpm exec vitepress-editor-api --env-file /path/to/editor.env
 
 ### Cloudflare PR 预览
 
-Workers Builds 在构建时为每篇可编辑文章生成该 Git 提交的原稿。预览 Worker 用静态资源绑定提供同源 `GET /api/editor/source`。点击「编辑此页」后，整篇笔记进入可视化编辑。底部工具栏可修改列表和引用、编辑表格、切换视图或完成编辑并查看差异。草稿支持刷新恢复。正式投稿由接入社区账号的站点处理。
+Workers Builds 在构建时为每篇可编辑文章生成该 Git 提交的原稿。预览 Worker 用静态资源绑定提供同源 `GET /api/editor/source`。点击「编辑此页」后，整篇笔记进入可视化编辑。点击公式可修改 LaTeX 或化学式并预览，底部的「插入公式」也能添加行内或独立公式。工具栏还支持列表、引用、表格、切换视图和查看差异。草稿支持刷新恢复。正式投稿由接入社区账号的站点处理。
 
 本地复现可先运行 `WORKERS_CI=1 WORKERS_CI_BRANCH=preview vp run docs:build`，再用 `wrangler dev --local` 启动预览。运行 `EDITOR_TEST_ORIGIN=<预览地址> vp run test:editor-preview` 可直接验证本地或 Cloudflare 上的 Worker，校验内容与当前 Git 提交一致。测试其他提交时可设置 `EDITOR_TEST_REVISION`。
 

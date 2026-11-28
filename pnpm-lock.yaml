@@ -191,8 +191,8 @@ importers:
         specifier: ^3.11.0
         version: 3.11.0(vue@3.5.44(typescript@6.0.3))
       vitepress-inline-editor:
-        specifier: 0.1.0-beta.1
-        version: 0.1.0-beta.1(@codemirror/language@6.13.1)(typescript@6.0.3)(vitepress@2.0.0-alpha.21(@types/node@24.19.2)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.13)(axios@1.20.0(debug@4.4.3))(markdown-it-mathjax3@4.3.2)(postcss@8.5.31)(typescript@6.0.3)(vue-tsc@3.3.13(typescript@6.0.3))(yaml@2.9.1))(vue@3.5.44(typescript@6.0.3))
+        specifier: 0.1.0-beta.2
+        version: 0.1.0-beta.2(@codemirror/language@6.13.1)(typescript@6.0.3)(vitepress@2.0.0-alpha.21(@types/node@24.19.2)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.13)(axios@1.20.0(debug@4.4.3))(markdown-it-mathjax3@4.3.2)(postcss@8.5.31)(typescript@6.0.3)(vue-tsc@3.3.13(typescript@6.0.3))(yaml@2.9.1))(vue@3.5.44(typescript@6.0.3))
     devDependencies:
       '@types/blueimp-md5':
         specifier: ^2.18.2
@@ -359,6 +359,15 @@ packages:
 
   '@marijn/find-cluster-break@1.0.4':
     resolution: {integrity: sha512-Wy0V7+SGUjnF9/TkiM1hKVDPj7jKXduPNboMVtHTA8dySMURWqfg/JZ9E2Sq8JgSJmkl7k7Qe9FLeMSrSraWmQ==}
+
+  '@mdit/plugin-tex@1.0.2':
+    resolution: {integrity: sha512-pj4xSLKT7ag7oTSLwQTW+QjEi8+/DgEzDXOI1r9bTX9dmFH15H8kbcZMs6wI5bgW26r4+yIU5OBaVsnesBgzYg==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      markdown-it: ^14.2.0
+    peerDependenciesMeta:
+      markdown-it:
+        optional: true
 
   '@milkdown/components@7.23.0':
     resolution: {integrity: sha512-KoGEk2MCrusUeVOQ5ag7O64GmT8aidvskKAkKT2szQA0VtxIgTJ60ughcuAkHibv9yd1FCiba1QBkck0rrlo4Q==}
@@ -2333,8 +2342,8 @@ packages:
       playwright:
         optional: true
 
-  vitepress-inline-editor@0.1.0-beta.1:
-    resolution: {integrity: sha512-cjNM8LS7JCdRIiqSykrELL63JvDxWB/W//H/20fBJotf7pPuMwSHO2bn0fMeyf7lcqyD88eAgSLPYD3oM/mYfw==}
+  vitepress-inline-editor@0.1.0-beta.2:
+    resolution: {integrity: sha512-qsQo011nEOvSvHdBrwGxmdGU2rvqESD9feNeXHqDnra8mZLoskU4+edrCg/LwSg+rZ0GWiCO+9WQnf5jE+fTIQ==}
     engines: {node: '>=24'}
     hasBin: true
     peerDependencies:
@@ -2638,6 +2647,12 @@ snapshots:
       vue: 3.5.44(typescript@6.0.3)
 
   '@marijn/find-cluster-break@1.0.4': {}
+
+  '@mdit/plugin-tex@1.0.2(markdown-it@14.3.3)':
+    dependencies:
+      '@types/markdown-it': 14.2.0
+    optionalDependencies:
+      markdown-it: 14.3.3
 
   '@milkdown/components@7.23.0(@codemirror/language@6.13.1)(@codemirror/state@6.7.6)(@codemirror/view@6.44.2)(typescript@6.0.3)':
     dependencies:
@@ -4985,18 +5000,21 @@ snapshots:
       - vue-tsc
       - yaml
 
-  vitepress-inline-editor@0.1.0-beta.1(@codemirror/language@6.13.1)(typescript@6.0.3)(vitepress@2.0.0-alpha.21(@types/node@24.19.2)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.13)(axios@1.20.0(debug@4.4.3))(markdown-it-mathjax3@4.3.2)(postcss@8.5.31)(typescript@6.0.3)(vue-tsc@3.3.13(typescript@6.0.3))(yaml@2.9.1))(vue@3.5.44(typescript@6.0.3)):
+  vitepress-inline-editor@0.1.0-beta.2(@codemirror/language@6.13.1)(typescript@6.0.3)(vitepress@2.0.0-alpha.21(@types/node@24.19.2)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.13)(axios@1.20.0(debug@4.4.3))(markdown-it-mathjax3@4.3.2)(postcss@8.5.31)(typescript@6.0.3)(vue-tsc@3.3.13(typescript@6.0.3))(yaml@2.9.1))(vue@3.5.44(typescript@6.0.3)):
     dependencies:
       '@codemirror/commands': 6.11.2
       '@codemirror/lang-markdown': 6.5.2
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.44.2
       '@lucide/vue': 1.77.0(vue@3.5.44(typescript@6.0.3))
+      '@mdit/plugin-tex': 1.0.2(markdown-it@14.3.3)
       '@milkdown/kit': 7.23.0(@codemirror/language@6.13.1)(@codemirror/state@6.7.6)(@codemirror/view@6.44.2)(typescript@6.0.3)
       diff: 8.0.4
       katex: 0.19.0
       markdown-it: 14.3.3
       mdast-util-from-markdown: 2.1.0
+      mdast-util-math: 3.0.0
+      micromark-extension-math: 3.1.0
       octokit: 5.0.5
       parse5: 8.1.1
       picomatch: 4.0.7

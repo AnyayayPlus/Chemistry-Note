@@ -80,6 +80,7 @@ await test("the deployed preview loads the Git source, edits it in three modes a
   const merged = rich.locator('th[rowspan="2"]');
   const original = source.markdown;
   const expected = original
+    .replace("电子层序数( $n$ )", "电子层序数( $n+1$ )")
     .replace("> 原子轨道数为", "> 原子轨道总数为")
     .replace("| 小  |", "| 较小  |")
     .replace('rowspan="2"> 能层', 'rowspan="2"> 所属能层');
@@ -93,6 +94,16 @@ await test("the deployed preview loads the Git source, edits it in three modes a
   }
   assert.ok(await quote.locator("mjx-container").count());
   assert.ok(await rich.locator('td[colspan="4"]').count());
+  await rich
+    .getByRole("columnheader")
+    .filter({ hasText: "电子层序数" })
+    .getByRole("button", { name: "编辑行内公式 n", exact: true })
+    .click();
+  const formula = page.getByRole("dialog", { name: "编辑公式" });
+  await formula.getByLabel("LaTeX 公式").fill("n+1");
+  await formula.locator(".katex").waitFor();
+  await formula.getByRole("button", { name: "应用公式" }).click();
+  await rich.getByRole("button", { name: "编辑行内公式 n+1", exact: true }).waitFor();
   const draft = () =>
     page.evaluate(
       () =>
