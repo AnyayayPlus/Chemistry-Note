@@ -31,7 +31,7 @@ go -C scripts/pdf test ./...
 pnpm exec vitepress-editor-api --env-file /path/to/editor.env
 ```
 
-本地投稿 API 使用下方的账号与仓库配置，HTTP 联调时用 `cc_reader` 作为 `EDITOR_ACCOUNT_COOKIE`。站点通过同源的 `/api/public/editor-contributors` 读取外部贡献者，本地可用 `VITE_EDITOR_CONTRIBUTORS_API` 覆盖。右上角「设置 → 站内编辑」带有 Beta 标签，初次访问和恢复默认均为关闭。开启后，「编辑此页」位于右侧文章大纲下方，窄屏显示在右下角。
+本地投稿 API 使用下方的账号与仓库配置，HTTP 联调时用 `cc_reader` 作为 `EDITOR_ACCOUNT_COOKIE`。站点通过同源的 `/api/public/editor-contributors` 读取外部贡献者，本地可用 `VITE_EDITOR_CONTRIBUTORS_API` 覆盖。右上角「设置 → 站内编辑」带有 Beta 标签，初次访问和恢复默认均为关闭。开启时会弹出测试阶段提示。点「知道了」返回设置后，「编辑此页」位于右侧文章大纲下方，窄屏显示在右下角。
 
 启动站点开发服务后，运行 `pnpm run test:editor` 检查编辑开关、取消或完成登录后恢复草稿、投稿回执和按文章展示的名单。可用 `EDITOR_TEST_ORIGIN` 指定开发服务地址，`PLAYWRIGHT_CHANNEL=chrome` 使用本机 Chrome。
 

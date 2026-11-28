@@ -97,8 +97,16 @@ await test("the settings menu opts in locally and the article only shows its own
   }
   const menu = await settings();
   const toggle = menu.getByRole("checkbox", { name: "显示「编辑此页」按钮" });
+  const notice = page.getByRole("alertdialog", { name: "站内编辑测试提示" });
+  assert.equal(await notice.count(), 0);
   assert.equal(await toggle.isChecked(), false);
   await toggle.check();
+  await notice.waitFor();
+  assert.equal(await notice.evaluate((el) => el.matches(":modal")), true);
+  await page.keyboard.press("Escape");
+  await notice.waitFor({ state: "hidden" });
+  assert.equal(await toggle.isChecked(), true);
+  assert.equal(await toggle.evaluate((el) => el === document.activeElement), true);
   await menu.getByRole("button", { name: "关闭显示配置" }).click();
   await page.reload();
   await button.click();
@@ -135,6 +143,11 @@ await test("the settings menu opts in locally and the article only shows its own
   await page.getByRole("button", { name: "返回文章" }).click();
   assert.equal(await page.getByRole("link", { name: "我的主页" }).count(), 0);
   await settings();
+  assert.equal(await notice.count(), 0);
+  await toggle.uncheck();
+  assert.equal(await notice.count(), 0);
+  await toggle.check();
+  await notice.getByRole("button", { name: "知道了" }).click();
   await toggle.uncheck();
   await menu.getByRole("button", { name: "关闭显示配置" }).click();
   await page.reload();
@@ -198,6 +211,7 @@ await test("readers on the short domain opt in on the same article on the submis
   assert.equal(page.url(), main + article.pathname + article.search + article.hash);
   assert.equal(await toggle.isChecked(), false);
   await toggle.check();
+  await page.getByRole("alertdialog").getByRole("button", { name: "知道了" }).click();
   await dialog.getByRole("button", { name: "完成" }).click();
   await edit.waitFor();
   assert.equal(submissionRequests, 0);

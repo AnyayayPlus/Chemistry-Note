@@ -27,6 +27,9 @@ await test("the deployed preview loads the Git source, edits it in three modes a
   const toggle = page.getByRole("checkbox", { name: "显示「编辑此页」按钮" });
   assert.equal(await toggle.isChecked(), false);
   await toggle.check();
+  const notice = page.getByRole("alertdialog", { name: "站内编辑测试提示" });
+  await notice.getByText("站内编辑目前处于测试阶段，可能不稳定。", { exact: true }).waitFor();
+  await notice.getByRole("button", { name: "知道了" }).click();
   await button("关闭显示配置").click();
 
   const sidebarEdit = page.locator(".VPDocAside").getByRole("button", { name: "编辑此页" });

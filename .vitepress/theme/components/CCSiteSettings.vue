@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { VPBadge } from "vitepress/theme";
-import { nextTick, onBeforeUnmount, onMounted, shallowRef, useTemplateRef } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, shallowRef, useId, useTemplateRef } from "vue";
 
 import type {
   ContributorsDisplay,
@@ -19,6 +19,9 @@ const { settings, updateSiteSettings, resetSiteSettings } = useSiteSettings();
 const isOpen = shallowRef(false);
 const dialogRef = useTemplateRef<HTMLDivElement>("dialog");
 const editorDetails = useTemplateRef<HTMLDetailsElement>("editorDetails");
+const editorToggle = useTemplateRef<HTMLInputElement>("editorToggle");
+const betaNotice = useTemplateRef<HTMLDialogElement>("betaNotice");
+const noticeMessageId = useId();
 const mainSiteSettingsUrl = shallowRef("");
 const editorSettingsParam = "editor-settings";
 
@@ -58,7 +61,9 @@ const updateBooleanSetting = (
   key: "showOutline" | "showComments" | "enableEditor",
   event: Event,
 ) => {
-  updateSiteSettings(key, (event.target as HTMLInputElement).checked);
+  const checked = (event.target as HTMLInputElement).checked;
+  updateSiteSettings(key, checked);
+  if (key === "enableEditor" && checked) betaNotice.value?.showModal();
 };
 
 const updateContributorsDisplay = (event: Event) => {
@@ -161,6 +166,7 @@ onBeforeUnmount(() => {
             <label v-else class="cc-settings-option">
               <span class="cc-settings-option__text">显示「编辑此页」按钮</span>
               <input
+                ref="editorToggle"
                 class="cc-settings-option__control"
                 type="checkbox"
                 :checked="settings.enableEditor"
@@ -233,6 +239,21 @@ onBeforeUnmount(() => {
           <button class="cc-settings-done" type="button" @click="closeDialog">完成</button>
         </footer>
       </div>
+      <dialog
+        ref="betaNotice"
+        class="cc-settings-dialog cc-editor-notice"
+        role="alertdialog"
+        aria-modal="true"
+        aria-label="站内编辑测试提示"
+        :aria-describedby="noticeMessageId"
+        @keydown.esc.stop
+        @close="editorToggle?.focus({ preventScroll: true })"
+      >
+        <p :id="noticeMessageId">站内编辑目前处于测试阶段，可能不稳定。</p>
+        <form method="dialog">
+          <button type="submit" class="cc-settings-done">知道了</button>
+        </form>
+      </dialog>
     </div>
   </Teleport>
 </template>
@@ -315,6 +336,22 @@ onBeforeUnmount(() => {
   margin: 0;
   font-size: 18px;
   line-height: 1.4;
+}
+
+.cc-editor-notice {
+  width: min(22rem, calc(100% - 2rem));
+  margin: auto;
+  padding: 20px;
+}
+
+.cc-editor-notice::backdrop {
+  background: rgb(0 0 0 / 28%);
+}
+
+.cc-editor-notice form {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
 }
 
 .cc-settings-dialog__close {
