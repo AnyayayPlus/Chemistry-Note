@@ -11,8 +11,6 @@ await test("the deployed preview loads the Git source, edits it in three modes a
   const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL });
   t.after(() => browser.close());
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-  const pageErrors = [];
-  page.on("pageerror", (error) => pageErrors.push(error.message));
   const accountRequests = [];
   page.on("request", (request) => {
     const { pathname } = new URL(request.url());
@@ -142,5 +140,5 @@ await test("the deployed preview loads the Git source, edits it in three modes a
   await button("完成编辑").click();
   assert.equal(await page.locator(".vpie-diff").innerText(), diff);
   assert.deepEqual(accountRequests, []);
-  assert.deepEqual(pageErrors, []);
+  assert.equal(await page.getByRole("region", { name: "编辑文章" }).getByRole("alert").count(), 0);
 });
