@@ -11,6 +11,8 @@ await test("the deployed preview loads the Git source, edits it in three modes a
   const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL });
   t.after(() => browser.close());
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  const pageErrors = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
   const accountRequests = [];
   page.on("request", (request) => {
     const { pathname } = new URL(request.url());
@@ -39,30 +41,106 @@ await test("the deployed preview loads the Git source, edits it in three modes a
   assert.equal(source.markdown, git("cat-file", "blob", revision + ":" + path));
   assert.equal(source.draftOnly, true);
 
-  await page
-    .locator(".vpie-projection")
-    .getByRole("heading", { name: "能层与能级", exact: true })
-    .click();
-  const rich = page.locator(".vpie-rich .ProseMirror");
-  await rich.click();
-  await page.keyboard.insertText("（试写）");
-  const editedHeading = await rich.innerText();
-  assert.ok(editedHeading.includes("（试写）"));
-  await button("完成此段").click();
-  await button("源码").click();
-  const editor = page.locator(".cm-content");
-  assert.ok((await editor.innerText()).includes(editedHeading.trim()));
+  const rich = page.getByRole("textbox", { name: "文章正文" });
+  const dock = page.getByRole("group", { name: "文章编辑工具栏" });
+  await rich.waitFor();
+  assert.equal(await page.locator("main.main").isVisible(), false);
+  assert.equal(await button("完成编辑").isEnabled(), false);
+  assert.equal(await rich.getByRole("table").count(), 2);
+  async function select(locator, value) {
+    await locator.scrollIntoViewIfNeeded();
+    await locator.evaluate((el, value) => {
+      el.closest("[contenteditable=true]").focus({ preventScroll: true });
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) {
+        const text = walker.currentNode,
+          at = text.textContent.indexOf(value);
+        if (at < 0) continue;
+        window.getSelection().setBaseAndExtent(text, at, text, at + value.length);
+        document.dispatchEvent(new Event("selectionchange"));
+        return;
+      }
+      throw Error("未找到正文文字 " + value);
+    }, value);
+  }
+  const quote = rich.locator("blockquote p").filter({ hasText: /原子轨道总?数为/ });
+  const merged = rich.locator('th[rowspan="2"]');
+  const original = source.markdown;
+  const expected = original
+    .replace("> 原子轨道数为", "> 原子轨道总数为")
+    .replace("| 小  |", "| 较小  |")
+    .replace('rowspan="2"> 能层', 'rowspan="2"> 所属能层');
+  for (const [node, before, after] of [
+    [quote, "轨道数", "轨道总数"],
+    [rich.getByRole("cell", { name: "小", exact: true }), "小", "较小"],
+    [merged, "能层", "所属能层"],
+  ]) {
+    await select(node, before);
+    await page.keyboard.insertText(after);
+  }
+  assert.ok(await quote.locator("mjx-container").count());
+  assert.ok(await rich.locator('td[colspan="4"]').count());
+  const draft = () =>
+    page.evaluate(
+      () =>
+        JSON.parse(
+          localStorage.getItem(Object.keys(localStorage).find((key) => key.startsWith("vpie:"))),
+        )?.draft,
+    );
+  assert.equal(await draft(), expected);
+
+  const sentence = "量子力学把电子在原子核外的一个";
+  const paragraph = rich.locator("p").filter({ hasText: sentence });
+  await select(paragraph, sentence);
+  await button("有序列表").click();
+  await rich.locator("ol li").filter({ hasText: sentence }).waitFor();
+  await button("无序列表").click();
+  await rich.locator("ul li").filter({ hasText: sentence }).waitFor();
+  await button("撤销").click();
+  await rich.locator("ol li").filter({ hasText: sentence }).waitFor();
+  await button("撤销").click();
+  assert.equal(await draft(), expected);
+
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await rich.getByRole("heading", { name: "原子轨道能量高低" }).scrollIntoViewIfNeeded();
+    const bounds = await dock.boundingBox();
+    assert.ok(bounds && bounds.x >= 0 && bounds.x + bounds.width <= viewport.width + 1);
+    assert.ok(bounds.y >= viewport.height - 140 && bounds.y + bounds.height <= viewport.height);
+    assert.ok(await button("完成编辑").isVisible());
+    await button("源码").click();
+    await page.locator(".cm-content").waitFor();
+    assert.equal(await draft(), expected);
+    await button("可视化").click();
+    await rich.waitFor();
+  }
+
   await button("分屏预览").click();
-  await editor.press("Control+End");
-  await page.keyboard.insertText("\n\n分屏试写标记。\n");
-  await page.getByLabel("实时预览").getByText("分屏试写标记。", { exact: true }).waitFor();
-  await button("查看改动").click();
-  assert.ok((await page.locator(".vpie-diff").innerText()).includes("分屏试写标记。"));
+  const preview = page.getByLabel("实时预览");
+  await preview.locator('th[rowspan="2"]').filter({ hasText: "所属能层" }).waitFor();
+  await preview.getByRole("cell", { name: "较小", exact: true }).waitFor();
+  await page.locator(".cm-content").press("ControlOrMeta+End");
+  await page.keyboard.press("Enter");
+  await page.keyboard.insertText("分屏试写标记。");
+  await page.keyboard.press("Enter");
+  await preview.getByText("分屏试写标记。", { exact: true }).waitFor();
+  const finalDraft = await draft();
+  assert.equal(finalDraft, expected + "\n分屏试写标记。\n");
+  await button("完成编辑").click();
+  const diff = await page.locator(".vpie-diff").innerText();
+  assert.ok(diff.includes("分屏试写标记。") && diff.includes("原子轨道总数为"));
   assert.equal(await button("确认投稿").count(), 0);
 
   await page.reload({ waitUntil: "domcontentloaded" });
   await button("编辑此页").click();
-  await button("查看改动").click();
-  assert.ok((await page.locator(".vpie-diff").innerText()).includes("分屏试写标记。"));
+  await rich.locator("blockquote").filter({ hasText: "原子轨道总数为" }).waitFor();
+  await rich.getByText("分屏试写标记。", { exact: true }).waitFor();
+  assert.equal(await draft(), finalDraft);
+  await button("完成编辑").click();
+  assert.equal(await page.locator(".vpie-diff").innerText(), diff);
   assert.deepEqual(accountRequests, []);
+  assert.deepEqual(pageErrors, []);
 });

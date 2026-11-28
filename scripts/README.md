@@ -23,7 +23,7 @@ go -C scripts/pdf test ./...
 
 ## 站内编辑试点接入
 
-站点从 `.vitepress/vendor/` 安装独立编辑器仓库构建的 pnpm 包。当前包为 `vitepress-inline-editor@0.1.0-dev.3`，对应提交 `1067dbe`。升级时替换发布包并更新锁文件。VitePress 构建读取当前 Git SHA。本地联调或没有 Git 元数据的构建环境可用 `EDITOR_CONTENT_REVISION` 指定内容仓库的已知提交。
+站点从 `.vitepress/vendor/` 安装独立编辑器仓库构建的 pnpm 包。当前包为 `vitepress-inline-editor@0.1.0-dev.4`，对应提交 `3192f8f`。升级时替换发布包并更新锁文件。VitePress 构建读取当前 Git SHA。本地联调或没有 Git 元数据的构建环境可用 `EDITOR_CONTENT_REVISION` 指定内容仓库的已知提交。
 
 站点容器与本地 Vite 开发服务通过 `EDITOR_API_ORIGIN` 把同源 `/api/editor/` 转发到投稿服务，默认上游为 `http://127.0.0.1:8787`。分容器运行时填入能从站点容器访问的服务地址。投稿服务使用站点实际来源 `SITE_ORIGIN`、`CONTENT_BRANCH=master` 和 `EDITOR_PATHS='["[0-9][0-9] */!(index).md"]'`。启动示例：
 
@@ -37,7 +37,7 @@ pnpm exec vitepress-editor-api --env-file /path/to/editor.env
 
 ### Cloudflare PR 预览
 
-Workers Builds 在构建时为每篇可编辑文章生成该 Git 提交的原稿。预览 Worker 用静态资源绑定提供同源 `GET /api/editor/source`。读者可试用三种编辑模式、刷新恢复本地草稿并查看差异。正式投稿由接入社区账号的站点处理。
+Workers Builds 在构建时为每篇可编辑文章生成该 Git 提交的原稿。预览 Worker 用静态资源绑定提供同源 `GET /api/editor/source`。点击「编辑此页」后，整篇笔记进入可视化编辑。底部工具栏可修改列表和引用、编辑表格、切换视图或完成编辑并查看差异。草稿支持刷新恢复。正式投稿由接入社区账号的站点处理。
 
 本地复现可先运行 `WORKERS_CI=1 WORKERS_CI_BRANCH=preview vp run docs:build`，再用 `wrangler dev --local` 启动预览。运行 `EDITOR_TEST_ORIGIN=<预览地址> vp run test:editor-preview` 可直接验证本地或 Cloudflare 上的 Worker，校验内容与当前 Git 提交一致。测试其他提交时可设置 `EDITOR_TEST_REVISION`。
 

@@ -4,7 +4,7 @@
     "axios": "^1.20.0",
     "blueimp-md5": "^2.19.0",
     "qrcode.vue": "^3.11.0",
-    "vitepress-inline-editor": "file:.vitepress/vendor/vitepress-inline-editor-0.1.0-dev.3.tgz"
+    "vitepress-inline-editor": "file:.vitepress/vendor/vitepress-inline-editor-0.1.0-dev.4.tgz"
   },
   "devDependencies": {
     "@types/blueimp-md5": "^2.18.2",

@@ -104,7 +104,7 @@ await test("the settings menu opts in locally and the article only shows its own
   await button.click();
   await page.getByRole("button", { name: "源码", exact: true }).click();
   await page.locator(".cm-content").fill("一行修改。");
-  await page.getByRole("button", { name: "查看改动" }).click();
+  await page.getByRole("button", { name: "完成编辑" }).click();
   assert.equal(reads, 1);
   assert.equal(logins, 0);
   assert.equal(sessionChecks, 0);
