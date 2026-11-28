@@ -23,7 +23,9 @@ go -C scripts/pdf test ./...
 
 ## 站内编辑试点接入
 
-站点从 `.vitepress/vendor/` 安装独立编辑器仓库构建的 pnpm 包。当前包为 `vitepress-inline-editor@0.1.0-dev.5`，对应提交 `534dc25`。升级时替换发布包并更新锁文件。VitePress 构建读取当前 Git SHA。本地联调或没有 Git 元数据的构建环境可用 `EDITOR_CONTENT_REVISION` 指定内容仓库的已知提交。
+站点和投稿 API 从 npm 安装同一版本的 `vitepress-inline-editor`。升级测试版时运行 `pnpm add --save-exact vitepress-inline-editor@beta`，并提交 `package.json` 和 `pnpm-lock.yaml`。[编辑器源码](https://github.com/Seeridia/vitepress-inline-editor) · [npm 版本](https://www.npmjs.com/package/vitepress-inline-editor?activeTab=versions)
+
+VitePress 构建读取当前 Git SHA。本地联调或没有 Git 元数据的构建环境可用 `EDITOR_CONTENT_REVISION` 指定内容仓库的已知提交。
 
 站点容器与本地 Vite 开发服务通过 `EDITOR_API_ORIGIN` 把同源 `/api/editor/` 转发到投稿服务，默认上游为 `http://127.0.0.1:8787`。分容器运行时填入能从站点容器访问的服务地址。投稿服务使用站点实际来源 `SITE_ORIGIN`、`CONTENT_BRANCH=master` 和 `EDITOR_PATHS='["[0-9][0-9] */!(index).md"]'`。启动示例：
 

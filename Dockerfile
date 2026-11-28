@@ -2,7 +2,6 @@ FROM node:24-bookworm-slim AS editor-api
 WORKDIR /app
 RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY .vitepress/vendor/ .vitepress/vendor/
 RUN NODE_USE_ENV_PROXY=1 pnpm install --prod --frozen-lockfile --ignore-scripts
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=8787 CONTENT_REPOSITORY=AnyayayPlus/Chemistry-Note CONTENT_BRANCH=master
 ENV EDITOR_REQUIRE_ACCOUNT=true EDITOR_ACCOUNT_COOKIE=__Host-cc_reader
