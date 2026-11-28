@@ -4,7 +4,7 @@ import { useData, useRoute } from "vitepress";
 import { InlineEditor } from "vitepress-inline-editor/vue";
 import "vitepress-inline-editor/style.css";
 import DefaultTheme from "vitepress/theme";
-import { computed, nextTick, onMounted, onBeforeUnmount, watch } from "vue";
+import { computed, nextTick, onMounted, onBeforeUnmount, useTemplateRef, watch } from "vue";
 
 import { getPageKind } from "../shared/page";
 import { SHORT_SITE_ORIGIN } from "../shared/site";
@@ -22,6 +22,7 @@ const { Layout } = DefaultTheme;
 const route = useRoute();
 const { page } = useData();
 const { settings } = useSiteSettings();
+const editorAside = useTemplateRef<HTMLDivElement>("editorAside");
 const canEditHere = typeof window !== "undefined" && window.location.origin !== SHORT_SITE_ORIGIN;
 const editorContributors = useEditorContributors(
   computed(() => {
@@ -122,9 +123,18 @@ watch(
     <!-- 面包屑 -->
     <template #doc-before>
       <Breadcrumb />
-      <ClientOnly
-        ><InlineEditor v-if="settings.enableEditor && canEditHere" :account="communityAccount"
-      /></ClientOnly>
+      <ClientOnly>
+        <InlineEditor
+          v-if="settings.enableEditor && canEditHere"
+          class="cc-article-editor"
+          :account="communityAccount"
+          :trigger-target="editorAside"
+        />
+      </ClientOnly>
+    </template>
+
+    <template #aside-outline-after>
+      <div ref="editorAside" class="cc-editor-aside" />
     </template>
 
     <template #doc-footer-before>
@@ -168,6 +178,27 @@ watch(
 </template>
 
 <style scoped>
+.cc-editor-aside :deep(.vpie-trigger) {
+  margin: 12px 0 0;
+}
+.cc-article-editor :deep(.vpie-trigger) {
+  position: fixed;
+  z-index: calc(var(--vp-z-index-local-nav) - 1);
+  inset-inline-end: max(12px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  min-height: 44px;
+  padding-inline: 14px;
+  margin: 0;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 22px;
+  background: var(--vp-c-bg-elv);
+  box-shadow: var(--vp-shadow-2);
+}
+@media print {
+  :deep(.vpie-trigger) {
+    display: none;
+  }
+}
 .cc-editor-credits-mobile {
   text-align: end;
 }

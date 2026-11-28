@@ -23,7 +23,7 @@ go -C scripts/pdf test ./...
 
 ## 站内编辑试点接入
 
-站点从 `.vitepress/vendor/` 安装独立编辑器仓库构建的 pnpm 包。当前包为 `vitepress-inline-editor@0.1.0-dev.4`，对应提交 `3192f8f`。升级时替换发布包并更新锁文件。VitePress 构建读取当前 Git SHA。本地联调或没有 Git 元数据的构建环境可用 `EDITOR_CONTENT_REVISION` 指定内容仓库的已知提交。
+站点从 `.vitepress/vendor/` 安装独立编辑器仓库构建的 pnpm 包。当前包为 `vitepress-inline-editor@0.1.0-dev.5`，对应提交 `534dc25`。升级时替换发布包并更新锁文件。VitePress 构建读取当前 Git SHA。本地联调或没有 Git 元数据的构建环境可用 `EDITOR_CONTENT_REVISION` 指定内容仓库的已知提交。
 
 站点容器与本地 Vite 开发服务通过 `EDITOR_API_ORIGIN` 把同源 `/api/editor/` 转发到投稿服务，默认上游为 `http://127.0.0.1:8787`。分容器运行时填入能从站点容器访问的服务地址。投稿服务使用站点实际来源 `SITE_ORIGIN`、`CONTENT_BRANCH=master` 和 `EDITOR_PATHS='["[0-9][0-9] */!(index).md"]'`。启动示例：
 
@@ -31,7 +31,7 @@ go -C scripts/pdf test ./...
 pnpm exec vitepress-editor-api --env-file /path/to/editor.env
 ```
 
-本地投稿 API 使用下方的账号与仓库配置，HTTP 联调时用 `cc_reader` 作为 `EDITOR_ACCOUNT_COOKIE`。站点通过同源的 `/api/public/editor-contributors` 读取外部贡献者，本地可用 `VITE_EDITOR_CONTRIBUTORS_API` 覆盖。右上角「设置 → 站内编辑」控制当前浏览器的编辑按钮，初次访问和恢复默认均为关闭。
+本地投稿 API 使用下方的账号与仓库配置，HTTP 联调时用 `cc_reader` 作为 `EDITOR_ACCOUNT_COOKIE`。站点通过同源的 `/api/public/editor-contributors` 读取外部贡献者，本地可用 `VITE_EDITOR_CONTRIBUTORS_API` 覆盖。右上角「设置 → 站内编辑」带有 Beta 标签，初次访问和恢复默认均为关闭。开启后，「编辑此页」位于右侧文章大纲下方，窄屏显示在右下角。
 
 启动站点开发服务后，运行 `pnpm run test:editor` 检查编辑开关、取消或完成登录后恢复草稿、投稿回执和按文章展示的名单。可用 `EDITOR_TEST_ORIGIN` 指定开发服务地址，`PLAYWRIGHT_CHANNEL=chrome` 使用本机 Chrome。
 

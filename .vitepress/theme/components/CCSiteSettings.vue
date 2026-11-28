@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { VPBadge } from "vitepress/theme";
 import { nextTick, onBeforeUnmount, onMounted, shallowRef, useTemplateRef } from "vue";
 
 import type {
@@ -153,7 +154,7 @@ onBeforeUnmount(() => {
 
         <div class="cc-settings-dialog__body">
           <details ref="editorDetails" class="cc-settings-editor">
-            <summary>站内编辑</summary>
+            <summary><span>站内编辑</span> <VPBadge type="info" text="Beta" /></summary>
             <a v-if="mainSiteSettingsUrl" :href="mainSiteSettingsUrl" class="cc-settings-option">
               在主站设置站内编辑
             </a>

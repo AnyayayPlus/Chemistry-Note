@@ -22,14 +22,25 @@ await test("the deployed preview loads the Git source, edits it in three modes a
   });
   const button = (name) => page.getByRole("button", { name, exact: true });
   await button("打开显示配置").click();
-  await page.getByText("站内编辑", { exact: true }).click();
+  const editorSetting = page.getByRole("dialog").locator("summary").filter({ hasText: "站内编辑" });
+  await editorSetting.getByText("Beta", { exact: true }).click();
   const toggle = page.getByRole("checkbox", { name: "显示「编辑此页」按钮" });
   assert.equal(await toggle.isChecked(), false);
   await toggle.check();
   await button("关闭显示配置").click();
 
+  const sidebarEdit = page.locator(".VPDocAside").getByRole("button", { name: "编辑此页" });
+  const edgeEdit = page.locator(".cc-article-editor").getByRole("button", { name: "编辑此页" });
+  await sidebarEdit.waitFor();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await edgeEdit.waitFor();
+  assert.equal(await edgeEdit.evaluate((el) => getComputedStyle(el).position), "fixed");
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await sidebarEdit.waitFor();
+  assert.equal(await button("编辑此页").count(), 1);
+
   const reading = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/editor/source");
-  await button("编辑此页").click();
+  await sidebarEdit.click();
   const response = await reading;
   assert.equal(response.status(), 200);
   const source = await response.json();
@@ -42,6 +53,7 @@ await test("the deployed preview loads the Git source, edits it in three modes a
   const rich = page.getByRole("textbox", { name: "文章正文" });
   const dock = page.getByRole("group", { name: "文章编辑工具栏" });
   await rich.waitFor();
+  assert.equal(await rich.evaluate((el) => !!el.closest(".content-container")), true);
   assert.equal(await page.locator("main.main").isVisible(), false);
   assert.equal(await button("完成编辑").isEnabled(), false);
   assert.equal(await rich.getByRole("table").count(), 2);
@@ -133,7 +145,10 @@ await test("the deployed preview loads the Git source, edits it in three modes a
   assert.equal(await button("确认投稿").count(), 0);
 
   await page.reload({ waitUntil: "domcontentloaded" });
-  await button("编辑此页").click();
+  await edgeEdit.waitFor();
+  const edgeBounds = await edgeEdit.boundingBox();
+  assert.ok(edgeBounds && edgeBounds.x > 260 && edgeBounds.x + edgeBounds.width <= 390);
+  await edgeEdit.click();
   await rich.locator("blockquote").filter({ hasText: "原子轨道总数为" }).waitFor();
   await rich.getByText("分屏试写标记。", { exact: true }).waitFor();
   assert.equal(await draft(), finalDraft);
@@ -141,4 +156,7 @@ await test("the deployed preview loads the Git source, edits it in three modes a
   assert.equal(await page.locator(".vpie-diff").innerText(), diff);
   assert.deepEqual(accountRequests, []);
   assert.equal(await page.getByRole("region", { name: "编辑文章" }).getByRole("alert").count(), 0);
+  await button("返回文章").click();
+  await edgeEdit.waitFor();
+  assert.equal(await edgeEdit.evaluate((el) => el === document.activeElement), true);
 });
