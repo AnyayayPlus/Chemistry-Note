@@ -2,13 +2,14 @@ import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitepress";
+import { withInlineEditor } from "vitepress-inline-editor/vitepress";
 
 import type { SiteThemeConfig } from "./shared/theme.ts";
 
 import { loadProjectConfig } from "../scripts/project-config.js";
 import { configureImageOptimization } from "./markdown/imageOptimization.ts";
 import { htmlToPdfPath, isPdfExportable } from "./shared/page.ts";
-import { GITHUB_URL } from "./shared/site.ts";
+import { GITHUB_REPOSITORY, GITHUB_URL, SITE_ORIGIN as siteUrl } from "./shared/site.ts";
 import { CONTENT_EXCLUDES, scanContent } from "./siteData/content.ts";
 import { contentPlugin } from "./siteData/contentPlugin.ts";
 import { buildNavItems } from "./siteData/nav.ts";
@@ -18,7 +19,6 @@ import mapShortUrl from "./theme/components/shortUrl/mapShortUrl.ts";
 
 const configDir = path.dirname(fileURLToPath(import.meta.url));
 const contentRoot = path.resolve(configDir, "..");
-const siteUrl = "https://chemistry-note.seeridia.top";
 const siteName = "Anyayay's Chemistry Note";
 const defaultDescription =
   "免费高中化学笔记，覆盖原子结构、有机化学、元素化合物、化学实验等核心板块，适合课堂学习与高考复习。";
@@ -27,10 +27,17 @@ const catalog = scanContent(contentRoot);
 const navItems = buildNavItems(catalog);
 const sidebarItems = buildSidebarItems(catalog);
 
-export default defineConfig<SiteThemeConfig>({
+const config = defineConfig<SiteThemeConfig>({
   srcExclude: CONTENT_EXCLUDES,
   vite: {
     plugins: [contentPlugin(contentRoot, () => catalog)],
+    server: {
+      proxy: {
+        "/api/editor/": process.env.EDITOR_API_ORIGIN || "http://127.0.0.1:8787",
+        "^/(?:api/account/(?:login|oidc/callback|session|profile|submissions|logout)|api/public/editor-contributors|u/[a-f0-9-]{36})(?:\\?|$)":
+          process.env.COMMUNITY_ACCOUNT_ORIGIN || "http://127.0.0.1:3000",
+      },
+    },
   },
   title: siteName,
   description: defaultDescription,
@@ -150,4 +157,14 @@ export default defineConfig<SiteThemeConfig>({
       writeFile(path.join(siteConfig.outDir, "pdf-catalog.json"), JSON.stringify({ units })),
     ]);
   },
+});
+
+export default withInlineEditor(config, {
+  repoRoot: contentRoot,
+  include: ["[0-9][0-9] */!(index).md"],
+  revision: process.env.EDITOR_CONTENT_REVISION,
+  staticPreview:
+    process.env.WORKERS_CI === "1"
+      ? { repository: GITHUB_REPOSITORY, branch: process.env.WORKERS_CI_BRANCH || "preview" }
+      : undefined,
 });

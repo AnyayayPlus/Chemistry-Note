@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, shallowRef, useTemplateRef } from "vue";
+import { VPBadge } from "vitepress/theme";
+import { nextTick, onBeforeUnmount, onMounted, shallowRef, useId, useTemplateRef } from "vue";
 
 import type {
   ContributorsDisplay,
@@ -7,22 +8,45 @@ import type {
   SiteFontFamily,
 } from "../composables/useSiteSettings";
 
+import { SHORT_SITE_ORIGIN, SITE_ORIGIN } from "../../shared/site";
 import { useSiteSettings } from "../composables/useSiteSettings";
 
-defineProps<{
+const props = defineProps<{
   screenMenu?: boolean;
 }>();
 
 const { settings, updateSiteSettings, resetSiteSettings } = useSiteSettings();
 const isOpen = shallowRef(false);
 const dialogRef = useTemplateRef<HTMLDivElement>("dialog");
+const editorDetails = useTemplateRef<HTMLDetailsElement>("editorDetails");
+const editorToggle = useTemplateRef<HTMLInputElement>("editorToggle");
+const betaNotice = useTemplateRef<HTMLDialogElement>("betaNotice");
+const noticeMessageId = useId();
+const mainSiteSettingsUrl = shallowRef("");
+const editorSettingsParam = "editor-settings";
 
 const openDialog = async () => {
+  if (window.location.origin === SHORT_SITE_ORIGIN) {
+    const target = new URL(window.location.href);
+    target.host = new URL(SITE_ORIGIN).host;
+    target.searchParams.set(editorSettingsParam, "1");
+    mainSiteSettingsUrl.value = target.href;
+  }
   isOpen.value = true;
   document.body.classList.add("cc-settings-modal-open");
   await nextTick();
   dialogRef.value?.focus();
 };
+
+onMounted(async () => {
+  if (props.screenMenu || window.location.origin !== SITE_ORIGIN) return;
+  const url = new URL(window.location.href);
+  if (url.searchParams.get(editorSettingsParam) !== "1") return;
+  url.searchParams.delete(editorSettingsParam);
+  window.history.replaceState(window.history.state, "", url);
+  await openDialog();
+  if (editorDetails.value) editorDetails.value.open = true;
+});
 
 const closeDialog = () => {
   isOpen.value = false;
@@ -33,8 +57,13 @@ const onKeydown = (event: KeyboardEvent) => {
   if (event.key === "Escape" && isOpen.value) closeDialog();
 };
 
-const updateBooleanSetting = (key: "showOutline" | "showComments", event: Event) => {
-  updateSiteSettings(key, (event.target as HTMLInputElement).checked);
+const updateBooleanSetting = (
+  key: "showOutline" | "showComments" | "enableEditor",
+  event: Event,
+) => {
+  const checked = (event.target as HTMLInputElement).checked;
+  updateSiteSettings(key, checked);
+  if (key === "enableEditor" && checked) betaNotice.value?.showModal();
 };
 
 const updateContributorsDisplay = (event: Event) => {
@@ -129,6 +158,22 @@ onBeforeUnmount(() => {
         </header>
 
         <div class="cc-settings-dialog__body">
+          <details ref="editorDetails" class="cc-settings-editor">
+            <summary><span>站内编辑</span> <VPBadge type="info" text="Beta" /></summary>
+            <a v-if="mainSiteSettingsUrl" :href="mainSiteSettingsUrl" class="cc-settings-option">
+              在主站设置站内编辑
+            </a>
+            <label v-else class="cc-settings-option">
+              <span class="cc-settings-option__text">显示「编辑此页」按钮</span>
+              <input
+                ref="editorToggle"
+                class="cc-settings-option__control"
+                type="checkbox"
+                :checked="settings.enableEditor"
+                @change="updateBooleanSetting('enableEditor', $event)"
+              />
+            </label>
+          </details>
           <label class="cc-settings-select">
             <span class="cc-settings-select__label">本文贡献者</span>
             <select
@@ -194,6 +239,21 @@ onBeforeUnmount(() => {
           <button class="cc-settings-done" type="button" @click="closeDialog">完成</button>
         </footer>
       </div>
+      <dialog
+        ref="betaNotice"
+        class="cc-settings-dialog cc-editor-notice"
+        role="alertdialog"
+        aria-modal="true"
+        aria-label="站内编辑测试提示"
+        :aria-describedby="noticeMessageId"
+        @keydown.esc.stop
+        @close="editorToggle?.focus({ preventScroll: true })"
+      >
+        <p :id="noticeMessageId">站内编辑目前处于测试阶段，可能不稳定。</p>
+        <form method="dialog">
+          <button type="submit" class="cc-settings-done">知道了</button>
+        </form>
+      </dialog>
     </div>
   </Teleport>
 </template>
@@ -278,6 +338,22 @@ onBeforeUnmount(() => {
   line-height: 1.4;
 }
 
+.cc-editor-notice {
+  width: min(22rem, calc(100% - 2rem));
+  margin: auto;
+  padding: 20px;
+}
+
+.cc-editor-notice::backdrop {
+  background: rgb(0 0 0 / 28%);
+}
+
+.cc-editor-notice form {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
 .cc-settings-dialog__close {
   display: inline-flex;
   align-items: center;
@@ -314,6 +390,18 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   gap: 16px;
   min-height: 36px;
+}
+.cc-settings-editor summary {
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--vp-c-text-1);
+}
+.cc-settings-editor .cc-settings-option {
+  margin: 6px 0 0 16px;
+}
+.cc-settings-editor a {
+  color: var(--vp-c-brand-1);
+  text-decoration: underline;
 }
 
 .cc-settings-option__text,

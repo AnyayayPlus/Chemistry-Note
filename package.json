@@ -3,7 +3,8 @@
     "@waline/client": "^3.16.2",
     "axios": "^1.20.0",
     "blueimp-md5": "^2.19.0",
-    "qrcode.vue": "^3.11.0"
+    "qrcode.vue": "^3.11.0",
+    "vitepress-inline-editor": "0.1.0-beta.2"
   },
   "devDependencies": {
     "@types/blueimp-md5": "^2.18.2",
@@ -30,7 +31,9 @@
     "prepare": "vp config --no-agent",
     "pdf:all": "go -C scripts/pdf run . build",
     "check": "vp check && vp run typecheck && vp run test:pages",
-    "test:pages": "node --test scripts/page-rules.test.ts"
+    "test:pages": "node --test scripts/page-rules.test.ts",
+    "test:editor": "node --test scripts/editor-ui.test.mjs",
+    "test:editor-preview": "node --test scripts/editor-preview.test.mjs"
   },
   "type": "module",
   "packageManager": "pnpm@12.14.0",

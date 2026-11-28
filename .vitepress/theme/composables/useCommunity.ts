@@ -22,7 +22,7 @@ type ApiCommunityData = {
   appreciators: { name: string; amount: string; date: string | null; message?: string | null }[];
 };
 
-const COMMUNITY_API = "https://chemistry-community.seeridia.top/api/public";
+export const COMMUNITY_API = "https://chemistry-community.seeridia.top/api/public";
 
 function isCommunityData(value: unknown): value is ApiCommunityData {
   if (!value || typeof value !== "object") return false;

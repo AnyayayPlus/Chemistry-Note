@@ -47,11 +47,15 @@ features:
 
 <script setup>
 import { VPTeamMembers } from 'vitepress/theme'
+import { ref } from 'vue'
+import CCEditorContributors from '/.vitepress/theme/components/CCEditorContributors.vue'
+import { useEditorContributors } from '/.vitepress/theme/composables/useEditorContributors'
 import { CCAppreciators, CCFeedbackers } from '/.vitepress/theme/components'
 
 import { useCommunity } from '/.vitepress/theme/composables/useCommunity'
 
 const { community, status, loadCommunity, totalAppreciation } = useCommunity()
+const editorContributors = useEditorContributors(ref(null))
 </script>
 
 ## 共建与支持
@@ -87,6 +91,8 @@ const { community, status, loadCommunity, totalAppreciation } = useCommunity()
 参与编辑、补充与校对的朋友。
 
 <VPTeamMembers v-if="status === 'ready'" size="small" :members="community.members" />
+
+<CCEditorContributors :items="editorContributors" detailed />
 
 ## 反馈者 Feedbackers
 

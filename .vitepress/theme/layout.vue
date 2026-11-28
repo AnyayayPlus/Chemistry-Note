@@ -1,18 +1,37 @@
 <script setup lang="ts">
 import mediumZoom from "medium-zoom";
-import { useRoute } from "vitepress";
+import { useData, useRoute } from "vitepress";
+import { InlineEditor } from "vitepress-inline-editor/vue";
+import "vitepress-inline-editor/style.css";
 import DefaultTheme from "vitepress/theme";
-import { nextTick, onMounted, onBeforeUnmount, watch } from "vue";
+import { computed, nextTick, onMounted, onBeforeUnmount, useTemplateRef, watch } from "vue";
 
+import { getPageKind } from "../shared/page";
+import { SHORT_SITE_ORIGIN } from "../shared/site";
+import { communityAccount } from "./communityAccount";
 import CCArticleContributors from "./components/CCArticleContributors.vue";
 import Breadcrumb from "./components/CCBreadCrumb.vue";
+import CCEditorContributors from "./components/CCEditorContributors.vue";
 import CCFooter from "./components/CCFooter.vue";
 import CCPdfDownloadLink from "./components/CCPdfDownloadLink.vue";
 import { CCPageviews, CCWaline } from "./components/waline";
-import { bootstrapSiteSettings } from "./composables/useSiteSettings";
+import { useEditorContributors } from "./composables/useEditorContributors";
+import { bootstrapSiteSettings, useSiteSettings } from "./composables/useSiteSettings";
 
 const { Layout } = DefaultTheme;
 const route = useRoute();
+const { page } = useData();
+const { settings } = useSiteSettings();
+const editorAside = useTemplateRef<HTMLDivElement>("editorAside");
+const canEditHere = typeof window !== "undefined" && window.location.origin !== SHORT_SITE_ORIGIN;
+const editorContributors = useEditorContributors(
+  computed(() => {
+    const path = page.value.filePath || page.value.relativePath;
+    return settings.contributorsDisplay !== "hidden" && getPageKind(path) === "article"
+      ? path
+      : undefined;
+  }),
+);
 const contentImageSelector = ".vp-doc img:not([data-no-zoom])";
 let imageZoom: ReturnType<typeof mediumZoom> | undefined;
 
@@ -104,6 +123,26 @@ watch(
     <!-- 面包屑 -->
     <template #doc-before>
       <Breadcrumb />
+      <ClientOnly>
+        <InlineEditor
+          v-if="settings.enableEditor && canEditHere"
+          class="cc-article-editor"
+          :account="communityAccount"
+          :trigger-target="editorAside"
+        />
+      </ClientOnly>
+    </template>
+
+    <template #aside-outline-after>
+      <div ref="editorAside" class="cc-editor-aside" />
+    </template>
+
+    <template #doc-footer-before>
+      <CCEditorContributors
+        class="cc-editor-credits-mobile"
+        :items="editorContributors"
+        :detailed="settings.contributorsDisplay === 'detailed'"
+      />
     </template>
 
     <!-- 评论区 -->
@@ -123,6 +162,10 @@ watch(
       <div class="cc-contributors-region">
         <ClientOnly>
           <CCArticleContributors />
+          <CCEditorContributors
+            :items="editorContributors"
+            :detailed="settings.contributorsDisplay === 'detailed'"
+          />
         </ClientOnly>
       </div>
     </template>
@@ -135,6 +178,38 @@ watch(
 </template>
 
 <style scoped>
+.cc-editor-aside :deep(.vpie-trigger) {
+  margin: 12px 0 0;
+}
+.cc-article-editor :deep(.vpie-trigger) {
+  position: fixed;
+  z-index: calc(var(--vp-z-index-local-nav) - 1);
+  inset-inline-end: max(12px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  min-height: 44px;
+  padding-inline: 14px;
+  margin: 0;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 22px;
+  background: var(--vp-c-bg-elv);
+  box-shadow: var(--vp-shadow-2);
+}
+@media print {
+  :deep(.vpie-trigger) {
+    display: none;
+  }
+}
+.cc-editor-credits-mobile {
+  text-align: end;
+}
+.cc-editor-credits-mobile :deep(ul) {
+  justify-content: flex-end;
+}
+@media (min-width: 80rem) {
+  .cc-editor-credits-mobile {
+    display: none;
+  }
+}
 .home-pdf-action {
   flex-shrink: 0;
   padding: 0.375rem;
