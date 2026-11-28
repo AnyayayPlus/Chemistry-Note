@@ -7,6 +7,7 @@ import DefaultTheme from "vitepress/theme";
 import { computed, nextTick, onMounted, onBeforeUnmount, watch } from "vue";
 
 import { getPageKind } from "../shared/page";
+import { communityAccount } from "./communityAccount";
 import CCArticleContributors from "./components/CCArticleContributors.vue";
 import Breadcrumb from "./components/CCBreadCrumb.vue";
 import CCEditorContributors from "./components/CCEditorContributors.vue";
@@ -119,7 +120,9 @@ watch(
     <!-- 面包屑 -->
     <template #doc-before>
       <Breadcrumb />
-      <ClientOnly><InlineEditor v-if="settings.enableEditor" require-contributor /></ClientOnly>
+      <ClientOnly
+        ><InlineEditor v-if="settings.enableEditor" :account="communityAccount"
+      /></ClientOnly>
     </template>
 
     <template #doc-footer-before>

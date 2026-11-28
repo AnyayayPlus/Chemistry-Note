@@ -32,7 +32,13 @@ const config = defineConfig<SiteThemeConfig>({
   srcExclude: CONTENT_EXCLUDES,
   vite: {
     plugins: [contentPlugin(contentRoot, () => catalog)],
-    server: { proxy: { "/api/editor/": process.env.EDITOR_API_ORIGIN || "http://127.0.0.1:8787" } },
+    server: {
+      proxy: {
+        "/api/editor/": process.env.EDITOR_API_ORIGIN || "http://127.0.0.1:8787",
+        "^/(?:api/account/(?:login|oidc/callback|session|profile|submissions|logout)|api/public/editor-contributors|u/[a-f0-9-]{36})(?:\\?|$)":
+          process.env.COMMUNITY_ACCOUNT_ORIGIN || "http://127.0.0.1:3000",
+      },
+    },
   },
   title: siteName,
   description: defaultDescription,

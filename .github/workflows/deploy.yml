@@ -82,6 +82,24 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build the account-enabled editor API
+        timeout-minutes: 15
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile
+          target: editor-api
+          platforms: linux/amd64
+          load: true
+          tags: ${{ env.IMAGE }}:editor-sha-${{ github.sha }}
+          provenance: false
+          sbom: false
+          cache-from: type=gha,scope=editor-api
+          cache-to: type=gha,mode=max,scope=editor-api
+
+      - name: Publish the matching editor API
+        run: docker push "${IMAGE}:editor-sha-${GITHUB_SHA}"
+
       - name: Push image to Tencent TCR
         id: push
         timeout-minutes: 10
@@ -136,5 +154,6 @@ jobs:
           echo "### Dokploy 部署镜像" >> "$GITHUB_STEP_SUMMARY"
           echo "Deploy target: ${IMAGE}:latest" >> "$GITHUB_STEP_SUMMARY"
           echo "${IMAGE}:sha-${GITHUB_SHA}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Editor API: ${IMAGE}:editor-sha-${GITHUB_SHA}" >> "$GITHUB_STEP_SUMMARY"
           echo "Digest: ${IMAGE_DIGEST}" >> "$GITHUB_STEP_SUMMARY"
           echo "Dokploy deployment requested; this confirms submission, not deployment completion." >> "$GITHUB_STEP_SUMMARY"

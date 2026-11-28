@@ -1,7 +1,5 @@
 import { onMounted, shallowRef, watch, type Ref } from "vue";
 
-import { COMMUNITY_API } from "./useCommunity";
-
 export interface EditorContributor {
   id: number;
   name: string;
@@ -21,7 +19,7 @@ export function useEditorContributors(path: Readonly<Ref<string | null | undefin
         onCleanup(() => controller.abort());
         try {
           const url = new URL(
-            import.meta.env.VITE_EDITOR_CONTRIBUTORS_API || COMMUNITY_API + "/editor-contributors",
+            import.meta.env.VITE_EDITOR_CONTRIBUTORS_API || "/api/public/editor-contributors",
             window.location.origin,
           );
           if (file !== null) url.searchParams.set("path", file);

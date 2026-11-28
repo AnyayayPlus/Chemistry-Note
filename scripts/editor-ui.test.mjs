@@ -13,7 +13,11 @@ await test("the settings menu opts in locally and the article only shows its own
     if (!localStorage.getItem("cc-site-settings"))
       localStorage.setItem("cc-site-settings", JSON.stringify({ showComments: false }));
   });
-  let reads = 0;
+  let reads = 0,
+    logins = 0,
+    sessionChecks = 0,
+    nickname = null;
+  const submissions = [];
   await context.route("**/*", (route) => {
     const url = new URL(route.request().url());
     if (url.pathname.endsWith("/editor-contributors")) {
@@ -28,9 +32,47 @@ await test("the settings menu opts in locally and the article only shows its own
     }
     if (url.pathname === "/api/editor/source") {
       reads++;
-      return route.fulfill({ json: { requiresContributor: false } });
+      return route.fulfill({
+        json: {
+          requiresAccount: true,
+          requiresContributor: true,
+          path,
+          repository: "test/notes",
+          branch: "main",
+          markdown: "一行原文。\n",
+          baseCommit: "a".repeat(40),
+          baseBlob: "b".repeat(40),
+        },
+      });
     }
-    if (url.pathname === "/api/editor/submissions") return route.abort();
+    if (url.pathname === "/api/editor/submissions") {
+      submissions.push(route.request().postDataJSON());
+      if (logins < 2) return route.fulfill({ status: 401, json: { code: "login_required" } });
+      if (!nickname) return route.fulfill({ status: 428, json: { code: "name_required" } });
+      return route.fulfill({
+        json: {
+          review: { number: 7, provider: "github", url: "https://example.test/pull/7" },
+          profileUrl: "/u/public-id",
+          submissionsUrl: "/api/account/submissions",
+        },
+      });
+    }
+    if (url.pathname === "/api/account/login") {
+      assert.equal(route.request().method(), "POST");
+      logins++;
+      const location = new URL(url.searchParams.get("returnTo"), origin).href;
+      assert.equal(location, article);
+      return route.fulfill({ status: 303, headers: { location } });
+    }
+    if (url.pathname === "/api/account/session") {
+      sessionChecks++;
+      if (logins < 2) return route.fulfill({ status: 401, json: {} });
+      return route.fulfill({ json: { name: nickname } });
+    }
+    if (url.pathname === "/api/account/profile") {
+      nickname = route.request().postDataJSON().name;
+      return route.fulfill({ json: { ok: true } });
+    }
     if (url.hostname === "comment-chemistry-note.seeridia.top")
       return route.fulfill({
         json: { errno: 0, data: [{ time: 1 }] },
@@ -60,9 +102,38 @@ await test("the settings menu opts in locally and the article only shows its own
   await menu.getByRole("button", { name: "关闭显示配置" }).click();
   await page.reload();
   await button.click();
-  await page.getByRole("alert").filter({ hasText: "站点尚未接通投稿署名服务" }).waitFor();
+  await page.getByRole("button", { name: "源码", exact: true }).click();
+  await page.locator(".cm-content").fill("一行修改。");
+  await page.getByRole("button", { name: "查看改动" }).click();
   assert.equal(reads, 1);
-  await page.getByRole("button", { name: "关闭编辑" }).click();
+  assert.equal(logins, 0);
+  assert.equal(sessionChecks, 0);
+  assert.equal(await page.getByRole("link", { name: "我的主页" }).count(), 0);
+  // The reader cancels the first login and returns to the same unsubmitted change.
+  const cancelled = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === "/api/account/session" && response.status() === 401,
+  );
+  await page.getByRole("button", { name: "确认投稿" }).click();
+  await cancelled;
+  assert.ok((await page.locator(".vpie-diff").innerText()).includes("一行修改"));
+  assert.equal(await page.getByLabel("公开署名").count(), 0);
+  await page.getByRole("button", { name: "确认投稿" }).click();
+  await page.getByLabel("公开署名").waitFor();
+  assert.ok((await page.locator(".vpie-diff").innerText()).includes("一行修改"));
+  await page.getByLabel("公开署名").fill("投稿人");
+  await page.getByRole("button", { name: "确认投稿" }).click();
+  await page.getByRole("link", { name: "我的主页" }).waitFor();
+  assert.equal(await page.getByRole("link", { name: "我的投稿" }).getAttribute("target"), "_self");
+  assert.equal(await page.getByRole("link", { name: "我的主页" }).getAttribute("target"), "_self");
+  assert.equal(logins, 2);
+  assert.equal(nickname, "投稿人");
+  assert.equal(submissions.length, 3);
+  assert.deepEqual(submissions[0], submissions[1]);
+  assert.deepEqual(submissions[1], submissions[2]);
+  assert.equal(submissions[2].contributor, undefined);
+  await page.getByRole("button", { name: "返回文章" }).click();
+  assert.equal(await page.getByRole("link", { name: "我的主页" }).count(), 0);
   await settings();
   await toggle.uncheck();
   await menu.getByRole("button", { name: "关闭显示配置" }).click();
